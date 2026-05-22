@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <title>2FA TOTP 工具</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f6;
+      --line: #dfe5e8;
+      --line-strong: #cbd5da;
+      --text: #111827;
+      --muted: #64717c;
+      --subtle: #8a96a0;
+      --accent: #0f9f8f;
+      --accent-soft: #dff8f4;
+      --danger: #dc2626;
+      --shadow: 0 16px 48px rgba(29, 41, 57, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(920px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: clamp(42px, 9vh, 86px) 0 40px;
+    }
+
+    .hero {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .brand {
+      margin: 0;
+      font-size: clamp(34px, 8vw, 64px);
+      line-height: 1;
+      letter-spacing: 0;
+      font-weight: 760;
+    }
+
+    .search-wrap {
+      position: relative;
+      width: min(680px, 100%);
+    }
+
+    .api-link {
+      height: 34px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface);
+    }
+
+    .api-link:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+    }
+
+    .home-footer {
+      width: min(560px, 100%);
+      margin: 18px auto 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 56px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 98px 0 22px;
+      outline: none;
+      color: var(--text);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--line-strong);
+      box-shadow: 0 18px 54px rgba(29, 41, 57, 0.12);
+    }
+
+    .search-actions {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transform: translateY(-50%);
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--muted);
+      transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--text);
+      background: var(--surface-soft);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
+    .icon-btn.danger:hover {
+      color: var(--danger);
+      background: #fee2e2;
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      pointer-events: none;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .current {
+      width: min(680px, 100%);
+      margin: 0 auto 22px;
+      min-height: 188px;
+    }
+
+    .current-card {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .empty {
+      padding: 30px 18px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.65;
+      border: 1px dashed var(--line-strong);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .meta-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .info-stack {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .identity {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .identity strong,
+    .identity span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .identity strong {
+      font-size: 16px;
+    }
+
+    .identity span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .secret-line {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-align: left;
+      user-select: none;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .code-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 138px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .totp-code {
+      width: 100%;
+      min-height: 76px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: var(--text);
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: clamp(42px, 10vw, 66px);
+      font-weight: 760;
+      line-height: 1;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .timer {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+      min-height: 76px;
+    }
+
+    .timer-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-soft);
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), #34d399);
+      transform-origin: left center;
+      transform: scaleX(var(--progress, 0));
+      will-change: transform;
+    }
+
+    .hint {
+      color: var(--subtle);
+      font-size: 12px;
+    }
+
+    .history {
+      width: min(560px, 100%);
+      margin: 0 auto;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      padding: 10px 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .history-head h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 720;
+    }
+
+    .records {
+      display: grid;
+      gap: 6px;
+    }
+
+    .record {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) 92px 128px;
+      gap: 6px;
+      align-items: center;
+      min-height: 48px;
+      padding: 6px 6px 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .record.active {
+      border-color: rgba(15, 159, 143, 0.34);
+      background: linear-gradient(0deg, rgba(15, 159, 143, 0.05), rgba(15, 159, 143, 0.05)), var(--surface);
+    }
+
+    .record-info {
+      min-width: 0;
+      display: grid;
+      gap: 1px;
+    }
+
+    .record-title {
+      min-width: 0;
+      display: grid;
+      gap: 1px;
+      text-align: left;
+      color: inherit;
+    }
+
+    .record-title strong,
+    .record-title span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .record-title strong {
+      font-size: 14px;
+      font-weight: 690;
+    }
+
+    .record-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .record-secret {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0;
+      text-align: left;
+      user-select: none;
+    }
+
+    .mini-code {
+      min-height: 36px;
+      border-radius: 10px;
+      color: var(--text);
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .record-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1px;
+    }
+
+    .record-actions .icon-btn {
+      width: 30px;
+      height: 32px;
+    }
+
+    .record-actions .icon {
+      width: 17px;
+      height: 17px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      z-index: 40;
+      width: max-content;
+      max-width: calc(100% - 28px);
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -14px);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(17, 24, 39, 0.32);
+    }
+
+    .modal.open {
+      display: grid;
+    }
+
+    .qr-panel {
+      width: min(360px, 100%);
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 24px 80px rgba(17, 24, 39, 0.2);
+    }
+
+    .edit-panel {
+      width: min(420px, 100%);
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 24px 80px rgba(17, 24, 39, 0.2);
+    }
+
+    .qr-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qr-head strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-grid label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .field-grid input,
+    .field-grid select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 10px;
+      outline: none;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .edit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .text-btn {
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      background: var(--surface-soft);
+    }
+
+    .text-btn.primary {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .copy-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .copy-row {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: inherit;
+      background: #f8fafb;
+      text-align: left;
+    }
+
+    .copy-row span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .copy-row code {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .home-view.hidden,
+    .api-view {
+      display: none;
+    }
+
+    .api-view.active {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .api-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .api-top h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .api-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .api-card h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .api-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .code-box {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fafb;
+    }
+
+    .code-box pre {
+      margin: 0;
+      overflow-x: auto;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #qrCanvas {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        width: min(100% - 18px, 920px);
+        padding-top: 34px;
+      }
+
+      .search-input {
+        height: 52px;
+        padding-left: 18px;
+        padding-right: 88px;
+      }
+
+      .current-card {
+        padding: 12px;
+      }
+
+      .code-row,
+      .record {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .timer {
+        min-height: auto;
+      }
+
+      .record {
+        gap: 6px;
+      }
+
+      .record-actions {
+        justify-content: flex-start;
+      }
+
+      .mini-code {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div id="homeView" class="home-view">
+    <section class="hero" aria-label="导入 2FA">
+      <h1 class="brand">2FA TOTP</h1>
+      <div class="search-wrap">
+        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入 Secret、otpauth 链接，按 Enter 解析">
+        <div class="search-actions">
+          <button id="imageBtn" class="icon-btn" type="button" title="读取二维码图片" aria-label="读取二维码图片">
+            <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10.5" r="1.5"></circle><path d="m21 15-5-5L5 19"></path></svg>
+          </button>
+          <button id="parseBtn" class="icon-btn" type="button" title="解析" aria-label="解析">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+          </button>
+        </div>
+        <input id="qrInput" class="file-input" type="file" accept="image/*" aria-hidden="true" tabindex="-1">
+      </div>
+    </section>
+
+    <section id="currentPanel" class="current" aria-label="当前验证码">
+      <div class="empty">输入或扫码导入后，验证码会显示在这里。密钥只保存在当前浏览器。</div>
+    </section>
+
+    <section class="history" aria-label="历史记录">
+      <div class="history-head">
+        <h2>历史记录</h2>
+        <span id="recordCount">0 条</span>
+      </div>
+      <div id="records" class="records"></div>
+    </section>
+    <div class="home-footer">
+      <button id="apiLink" class="api-link" type="button">API 调用示例</button>
+    </div>
+    </div>
+
+    <section id="apiView" class="api-view" aria-label="API 调用示例">
+      <div class="api-top">
+        <h2>API 调用示例</h2>
+        <button id="backHome" class="text-btn" type="button">返回</button>
+      </div>
+      <div id="apiExamples"></div>
+    </section>
+  </main>
+
+  <div id="qrModal" class="modal" role="dialog" aria-modal="true" aria-label="2FA 二维码">
+    <div class="qr-panel">
+      <div class="qr-head">
+        <strong id="qrTitle">二维码</strong>
+        <button id="qrClose" class="icon-btn" type="button" title="关闭" aria-label="关闭二维码">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <canvas id="qrCanvas" width="300" height="300"></canvas>
+      <div class="copy-list">
+        <button id="qrSecret" class="copy-row" type="button"><span>Secret</span><code></code></button>
+        <button id="qrOtpAuth" class="copy-row" type="button"><span>otpauth</span><code></code></button>
+      </div>
+      <div class="hint">用其他 2FA 工具扫描即可导入原始 otpauth 配置。</div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-label="编辑 2FA">
+    <form id="editForm" class="edit-panel">
+      <div class="qr-head">
+        <strong>编辑 2FA</strong>
+        <button id="editClose" class="icon-btn" type="button" title="关闭" aria-label="关闭编辑">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <div class="field-grid">
+        <label>名称<input id="editLabel" autocomplete="off"></label>
+        <label>Issuer<input id="editIssuer" autocomplete="off"></label>
+        <label>Secret<input id="editSecret" autocomplete="off" spellcheck="false"></label>
+        <label>位数<input id="editDigits" type="number" min="6" max="8" step="1"></label>
+        <label>周期<input id="editPeriod" type="number" min="10" step="1"></label>
+        <label>算法<select id="editAlgorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
+      </div>
+      <div class="edit-actions">
+        <button id="editCancel" class="text-btn" type="button">取消</button>
+        <button class="text-btn primary" type="submit">保存</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = 'totp-records-v1';
+    const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+    const QR_CODE_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    const state = {
+      records: [],
+      activeId: null,
+      codes: new Map(),
+      toastTimer: null,
+      raf: 0,
+      renderedSecond: -1,
+      editId: null
+    };
+
+    const icons = {
+      share: '<svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4"></path><path d="m15.4 6.5-6.8 4"></path></svg>',
+      qr: '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h3v3"></path><path d="M14 18h3v3"></path><path d="M20 20h1v1h-1z"></path></svg>',
+      edit: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
+      copy: '<svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"></rect><rect x="2" y="2" width="13" height="13" rx="2"></rect></svg>',
+      trash: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path><path d="M10 11v5"></path><path d="M14 11v5"></path></svg>'
+    };
+
+    const els = {
+      input: document.getElementById('secretInput'),
+      homeView: document.getElementById('homeView'),
+      apiView: document.getElementById('apiView'),
+      apiLink: document.getElementById('apiLink'),
+      backHome: document.getElementById('backHome'),
+      apiExamples: document.getElementById('apiExamples'),
+      parseBtn: document.getElementById('parseBtn'),
+      imageBtn: document.getElementById('imageBtn'),
+      qrInput: document.getElementById('qrInput'),
+      currentPanel: document.getElementById('currentPanel'),
+      records: document.getElementById('records'),
+      recordCount: document.getElementById('recordCount'),
+      toast: document.getElementById('toast'),
+      qrModal: document.getElementById('qrModal'),
+      qrCanvas: document.getElementById('qrCanvas'),
+      qrTitle: document.getElementById('qrTitle'),
+      qrClose: document.getElementById('qrClose'),
+      qrSecret: document.getElementById('qrSecret'),
+      qrOtpAuth: document.getElementById('qrOtpAuth'),
+      editModal: document.getElementById('editModal'),
+      editForm: document.getElementById('editForm'),
+      editClose: document.getElementById('editClose'),
+      editCancel: document.getElementById('editCancel'),
+      editLabel: document.getElementById('editLabel'),
+      editIssuer: document.getElementById('editIssuer'),
+      editSecret: document.getElementById('editSecret'),
+      editDigits: document.getElementById('editDigits'),
+      editPeriod: document.getElementById('editPeriod'),
+      editAlgorithm: document.getElementById('editAlgorithm')
+    };
+
+    init();
+
+    function init() {
+      state.records = loadRecords();
+      state.activeId = state.records[0]?.id || null;
+      bindEvents();
+      importFromUrl();
+      render();
+      renderRoute();
+      state.raf = requestAnimationFrame(animate);
+    }
+
+    function bindEvents() {
+      els.apiLink.addEventListener('click', () => {
+        window.location.hash = 'api';
+      });
+      els.backHome.addEventListener('click', () => {
+        window.location.hash = '';
+      });
+      window.addEventListener('hashchange', renderRoute);
+      els.parseBtn.addEventListener('click', () => addFromText(els.input.value));
+      els.imageBtn.addEventListener('click', () => els.qrInput.click());
+      els.input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          addFromText(els.input.value);
+        }
+      });
+      els.qrInput.addEventListener('change', handleQrUpload);
+      els.qrClose.addEventListener('click', closeQrModal);
+      els.qrSecret.addEventListener('click', () => copyText(els.qrSecret.dataset.value || '').then(() => showToast('Secret 已复制')));
+      els.qrOtpAuth.addEventListener('click', () => copyText(els.qrOtpAuth.dataset.value || '').then(() => showToast('otpauth 已复制')));
+      els.qrModal.addEventListener('click', (event) => {
+        if (event.target === els.qrModal) closeQrModal();
+      });
+      els.editClose.addEventListener('click', closeEditModal);
+      els.editCancel.addEventListener('click', closeEditModal);
+      els.editForm.addEventListener('submit', saveEditForm);
+      els.editModal.addEventListener('click', (event) => {
+        if (event.target === els.editModal) closeEditModal();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeQrModal();
+          closeEditModal();
+        }
+      });
+    }
+
+    async function animate() {
+      const now = Date.now();
+      const active = getActiveRecord();
+      if (active) {
+        const elapsed = (now / 1000) % active.period;
+        const remaining = Math.max(0, active.period - elapsed);
+        document.documentElement.style.setProperty('--progress', String(remaining / active.period));
+        const second = Math.ceil(remaining);
+        const timerText = document.getElementById('timerText');
+        if (timerText) timerText.textContent = `${String(second).padStart(2, '0')}s`;
+
+        const wholeSecond = Math.floor(now / 1000);
+        if (wholeSecond !== state.renderedSecond) {
+          state.renderedSecond = wholeSecond;
+          await refreshCodes(now);
+          renderCurrent();
+          renderRecords();
+        }
+      }
+      state.raf = requestAnimationFrame(animate);
+    }
+
+    async function refreshCodes(now = Date.now()) {
+      await Promise.all(state.records.map(async (record) => {
+        try {
+          const code = await generateTotp(record.secret, record, now);
+          state.codes.set(record.id, code);
+        } catch {
+          state.codes.set(record.id, '错误');
+        }
+      }));
+    }
+
+    function addFromText(raw) {
+      try {
+        const record = parseInput(raw);
+        saveRecord(record);
+        els.input.value = '';
+        showToast('已解析');
+      } catch (error) {
+        showToast(error.message || '无法解析输入');
+      }
+    }
+
+    function saveRecord(record) {
+      const normalized = {
+        id: record.id || crypto.randomUUID(),
+        label: record.label || '',
+        issuer: record.issuer || '',
+        secret: normalizeSecret(record.secret),
+        algorithm: (record.algorithm || 'SHA1').toUpperCase(),
+        digits: Number(record.digits || 6),
+        period: Number(record.period || 30),
+        addedAt: record.addedAt || new Date().toISOString()
+      };
+
+      assertSecret(normalized.secret);
+      if (![6, 7, 8].includes(normalized.digits)) normalized.digits = 6;
+      if (!Number.isFinite(normalized.period) || normalized.period < 10) normalized.period = 30;
+      if (!['SHA1', 'SHA256', 'SHA512'].includes(normalized.algorithm)) normalized.algorithm = 'SHA1';
+
+      const key = recordKey(normalized);
+      const existingIndex = state.records.findIndex((item) => recordKey(item) === key);
+      if (existingIndex >= 0) {
+        normalized.id = state.records[existingIndex].id;
+        normalized.addedAt = state.records[existingIndex].addedAt;
+        state.records.splice(existingIndex, 1, normalized);
+      } else {
+        state.records.unshift(normalized);
+      }
+
+      state.activeId = normalized.id;
+      state.renderedSecond = -1;
+      persistRecords();
+      render();
+    }
+
+    function deleteRecord(id) {
+      state.records = state.records.filter((item) => item.id !== id);
+      if (state.activeId === id) state.activeId = state.records[0]?.id || null;
+      state.codes.delete(id);
+      persistRecords();
+      render();
+      showToast('已删除');
+    }
+
+    function setActive(id) {
+      state.activeId = id;
+      state.renderedSecond = -1;
+      render();
+    }
+
+    function render() {
+      renderCurrent();
+      renderRecords();
+      renderApiExamples();
+      els.recordCount.textContent = `${state.records.length} 条`;
+    }
+
+    function renderRoute() {
+      const apiMode = window.location.hash === '#api';
+      els.homeView.classList.toggle('hidden', apiMode);
+      els.apiView.classList.toggle('active', apiMode);
+      if (apiMode) renderApiExamples();
+    }
+
+    function renderApiExamples() {
+      const active = getActiveRecord();
+      const base = window.location.protocol === 'file:'
+        ? 'https://your-domain.example'
+        : `${window.location.origin}${window.location.pathname}`;
+      const secret = active?.secret || 'JBSWY3DPEHPK3PXP';
+      const otpAuth = active ? buildOtpAuth(active) : 'otpauth://totp/Demo?secret=JBSWY3DPEHPK3PXP&issuer=Demo';
+      const textUrl = `${base}?secret=${encodeURIComponent(secret)}&format=text`;
+      const jsonUrl = `${base}?secret=${encodeURIComponent(secret)}&format=json`;
+      const otpAuthUrl = `${base}?url=${encodeURIComponent(otpAuth)}&format=otpauth`;
+      const autoTextUrl = `${base}?secret=${encodeURIComponent(secret)}`;
+      const acceptJsonUrl = `${base}?secret=${encodeURIComponent(secret)}`;
+      const curlSecret = `curl "${textUrl}"`;
+      const curlJson = `curl "${jsonUrl}"`;
+      const curlOtpAuth = `curl "${otpAuthUrl}"`;
+      const curlAutoText = `curl "${autoTextUrl}"`;
+      const curlAcceptJson = `curl -H "Accept: application/json" "${acceptJsonUrl}"`;
+      const fetchExample = `const code = await fetch("${textUrl}")\n  .then((res) => res.text());\nconsole.log(code);`;
+
+      els.apiExamples.innerHTML = `
+        <div class="api-card">
+          <h3>format=text</h3>
+          <p>返回纯文本验证码，适合 shell、脚本、快捷指令等场景。别名：plain、raw、code、totp。</p>
+          ${renderCodeBox(curlSecret)}
+        </div>
+        <div class="api-card">
+          <h3>format=json</h3>
+          <p>返回结构化数据，包含 code、remaining、period、digits、algorithm、secret、issuer、label、otpauth、generatedAt、validUntil。</p>
+          ${renderCodeBox(curlJson)}
+        </div>
+        <div class="api-card">
+          <h3>format=otpauth</h3>
+          <p>返回标准 otpauth URI，适合把参数规范化后交给其他 2FA 工具。别名：uri、url。</p>
+          ${renderCodeBox(curlOtpAuth)}
+        </div>
+        <div class="api-card">
+          <h3>命令行默认格式</h3>
+          <p>curl、wget、HTTPie 等命令行工具不写 format 时会默认返回纯文本验证码。</p>
+          ${renderCodeBox(curlAutoText)}
+        </div>
+        <div class="api-card">
+          <h3>Accept 自动识别</h3>
+          <p>不写 format 时，也可以通过 Accept: application/json 请求 JSON。</p>
+          ${renderCodeBox(curlAcceptJson)}
+        </div>
+        <div class="api-card">
+          <h3>JavaScript 获取纯文本</h3>
+          <p>浏览器或自动化脚本建议显式带上 format=text，避免被当成普通网页打开。</p>
+          ${renderCodeBox(fetchExample)}
+        </div>
+      `;
+      els.apiExamples.querySelectorAll('[data-api-copy]').forEach((button) => {
+        button.addEventListener('click', () => copyText(button.dataset.apiCopy || '').then(() => showToast('示例已复制')));
+      });
+    }
+
+    function renderCodeBox(code) {
+      return `
+        <div class="code-box">
+          <pre>${escapeHtml(code)}</pre>
+          <button class="icon-btn" type="button" data-api-copy="${escapeHtml(code)}" title="复制示例" aria-label="复制示例">${icons.copy}</button>
+        </div>
+      `;
+    }
+
+    function renderIdentityHtml(record) {
+      const parts = [];
+      if (record.label) parts.push(`<strong>${escapeHtml(record.label)}</strong>`);
+      if (record.issuer) parts.push(`<span>${escapeHtml(record.issuer)}</span>`);
+      if (!parts.length) return '';
+      return `<div class="identity">${parts.join('')}</div>`;
+    }
+
+    function buildDisplayName(record) {
+      return [record.issuer, record.label].filter(Boolean).join(' · ');
+    }
+
+    function renderCurrent() {
+      const active = getActiveRecord();
+      if (!active) {
+        els.currentPanel.innerHTML = '<div class="empty">输入或扫码导入后，验证码会显示在这里。密钥只保存在当前浏览器。</div>';
+        return;
+      }
+
+      const code = state.codes.get(active.id) || ''.padStart(active.digits || 6, '·');
+      const identityHtml = renderIdentityHtml(active);
+      els.currentPanel.innerHTML = `
+        <div class="current-card">
+          <div class="meta-line">
+            <div class="info-stack">
+              ${identityHtml}
+              <button class="secret-line" type="button" data-action="copy-secret" data-id="${active.id}" title="点击复制 Secret">Secret ${escapeHtml(active.secret)}</button>
+            </div>
+            <div class="quick-actions">
+              <button class="icon-btn" type="button" data-action="edit" data-id="${active.id}" title="编辑" aria-label="编辑">${icons.edit}</button>
+              <button class="icon-btn" type="button" data-action="share" data-id="${active.id}" title="复制分享链接" aria-label="复制分享链接">${icons.share}</button>
+              <button class="icon-btn" type="button" data-action="qr" data-id="${active.id}" title="显示导入二维码" aria-label="显示导入二维码">${icons.qr}</button>
+            </div>
+          </div>
+          <div class="code-row">
+            <button class="totp-code" type="button" data-action="copy-code" data-id="${active.id}" title="点击复制验证码">${escapeHtml(code)}</button>
+            <div class="timer">
+              <div class="timer-top"><span>剩余</span><strong id="timerText">--s</strong></div>
+              <div class="bar"><div class="bar-fill"></div></div>
+              <div class="hint">${active.digits} 位 / ${active.period}s / ${escapeHtml(active.algorithm)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      els.currentPanel.querySelectorAll('[data-action]').forEach((button) => {
+        button.addEventListener('click', handleRecordAction);
+      });
+    }
+
+    function renderRecords() {
+      if (!state.records.length) {
+        els.records.innerHTML = '';
+        return;
+      }
+
+      els.records.innerHTML = state.records.map((record) => {
+        const code = state.codes.get(record.id) || ''.padStart(record.digits || 6, '·');
+        const activeClass = record.id === state.activeId ? ' active' : '';
+        const identityHtml = renderIdentityHtml(record);
+        return `
+          <article class="record${activeClass}">
+            <div class="record-info">
+              ${identityHtml ? `<button class="record-title" type="button" data-action="activate" data-id="${record.id}" title="切换当前验证码">${identityHtml}</button>` : ''}
+              <button class="record-secret" type="button" data-action="copy-secret" data-id="${record.id}" title="点击复制 Secret">${escapeHtml(record.secret)}</button>
+            </div>
+            <button class="mini-code" type="button" data-action="copy-code" data-id="${record.id}" title="点击复制验证码">${escapeHtml(code)}</button>
+            <div class="record-actions">
+              <button class="icon-btn" type="button" data-action="edit" data-id="${record.id}" title="编辑" aria-label="编辑">${icons.edit}</button>
+              <button class="icon-btn" type="button" data-action="share" data-id="${record.id}" title="复制分享链接" aria-label="复制分享链接">${icons.share}</button>
+              <button class="icon-btn" type="button" data-action="qr" data-id="${record.id}" title="显示导入二维码" aria-label="显示导入二维码">${icons.qr}</button>
+              <button class="icon-btn danger" type="button" data-action="delete" data-id="${record.id}" title="删除" aria-label="删除">${icons.trash}</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      els.records.querySelectorAll('[data-action]').forEach((button) => {
+        button.addEventListener('click', handleRecordAction);
+      });
+    }
+
+    function handleRecordAction(event) {
+      const button = event.currentTarget;
+      event.preventDefault();
+      button.blur();
+      const action = button.dataset.action;
+      const id = button.dataset.id;
+      const record = state.records.find((item) => item.id === id);
+      if (!record) return;
+
+      if (action === 'activate') {
+        setActive(id);
+        return;
+      }
+      if (action === 'copy-code') {
+        copyText(state.codes.get(id) || '').then(() => showToast('验证码已复制'));
+        return;
+      }
+      if (action === 'copy-secret') {
+        copyText(record.secret).then(() => showToast('Secret 已复制'));
+        return;
+      }
+      if (action === 'edit') {
+        openEditModal(record);
+        return;
+      }
+      if (action === 'share') {
+        copyText(buildShareLink(record)).then(() => showToast('分享链接已复制'));
+        return;
+      }
+      if (action === 'qr') {
+        openQrModal(record);
+        return;
+      }
+      if (action === 'delete') {
+        deleteRecord(id);
+      }
+    }
+
+    function importFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const incoming = params.get('url') || params.get('otpauth') || params.get('otp') || params.get('secret');
+      if (!incoming) return;
+      try {
+        saveRecord(parseInput(incoming, params));
+        const clean = `${window.location.pathname}${window.location.hash || ''}`;
+        window.history.replaceState({}, '', clean);
+        showToast('已从 URL 导入');
+      } catch (error) {
+        showToast(error.message || 'URL 参数无法解析');
+      }
+    }
+
+    function parseInput(raw, extraParams = null) {
+      const text = String(raw || '').trim();
+      if (!text) throw new Error('请输入 Secret 或 otpauth 链接');
+      const decodedText = safeDecode(text);
+
+      if (decodedText.toLowerCase().startsWith('otpauth://')) {
+        return parseOtpAuth(decodedText);
+      }
+
+      const urlRecord = parseUrlLike(decodedText);
+      if (urlRecord) return urlRecord;
+
+      const params = extraParams || parseSearchParams(decodedText);
+      if (params) {
+        const nested = params.get('url') || params.get('otpauth') || params.get('otp');
+        if (nested) return parseInput(nested);
+        const secret = params.get('secret');
+        if (secret) {
+          return {
+            label: params.get('label') || params.get('account') || '',
+            issuer: params.get('issuer') || '',
+            secret,
+            digits: Number(params.get('digits') || 6),
+            period: Number(params.get('period') || 30),
+            algorithm: params.get('algorithm') || 'SHA1'
+          };
+        }
+      }
+
+      return {
+        label: '',
+        issuer: '',
+        secret: decodedText,
+        digits: 6,
+        period: 30,
+        algorithm: 'SHA1'
+      };
+    }
+
+    function parseOtpAuth(raw) {
+      let url;
+      try {
+        url = new URL(raw);
+      } catch {
+        throw new Error('otpauth 链接格式不正确');
+      }
+      const secret = url.searchParams.get('secret');
+      if (!secret) throw new Error('otpauth 链接缺少 secret');
+
+      const labelRaw = decodeURIComponent(url.pathname.replace(/^\/+/, '')) || 'TOTP';
+      const issuerParam = url.searchParams.get('issuer') || '';
+      let issuer = issuerParam;
+      let label = labelRaw;
+      if (labelRaw.includes(':')) {
+        const parts = labelRaw.split(':');
+        const prefix = parts.shift().trim();
+        if (!issuer) issuer = prefix;
+        if (issuer === prefix) label = parts.join(':').trim();
+      }
+
+      return {
+        label: label || issuer || 'TOTP',
+        issuer,
+        secret,
+        digits: Number(url.searchParams.get('digits') || 6),
+        period: Number(url.searchParams.get('period') || 30),
+        algorithm: url.searchParams.get('algorithm') || 'SHA1'
+      };
+    }
+
+    function parseUrlLike(text) {
+      try {
+        const url = new URL(text);
+        const nested = url.searchParams.get('url') || url.searchParams.get('otpauth') || url.searchParams.get('otp');
+        if (nested) return parseInput(nested);
+        const secret = url.searchParams.get('secret');
+        if (!secret) return null;
+        return {
+          label: url.searchParams.get('label') || url.searchParams.get('account') || '',
+          issuer: url.searchParams.get('issuer') || '',
+          secret,
+          digits: Number(url.searchParams.get('digits') || 6),
+          period: Number(url.searchParams.get('period') || 30),
+          algorithm: url.searchParams.get('algorithm') || 'SHA1'
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function parseSearchParams(text) {
+      const trimmed = text.replace(/^\?/, '');
+      if (!trimmed.includes('=')) return null;
+      return new URLSearchParams(trimmed);
+    }
+
+    async function handleQrUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const content = await decodeQrFromImage(file);
+        addFromText(content);
+      } catch (error) {
+        showToast(error.message || '没有识别到二维码');
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    async function decodeQrFromImage(file) {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(bitmap, 0, 0);
+
+      if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['qr_code'] });
+        const results = await detector.detect(canvas);
+        if (results[0]?.rawValue) return results[0].rawValue;
+      }
+
+      await ensureJsQr();
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const result = window.jsQR(imageData.data, imageData.width, imageData.height);
+      if (result?.data) return result.data;
+      throw new Error('没有识别到二维码');
+    }
+
+    function ensureJsQr() {
+      if (window.jsQR) return Promise.resolve();
+      return loadScript(JSQR_URL, () => window.jsQR);
+    }
+
+    function openEditModal(record) {
+      state.editId = record.id;
+      els.editLabel.value = record.label || '';
+      els.editIssuer.value = record.issuer || '';
+      els.editSecret.value = record.secret || '';
+      els.editDigits.value = String(record.digits || 6);
+      els.editPeriod.value = String(record.period || 30);
+      els.editAlgorithm.value = record.algorithm || 'SHA1';
+      els.editModal.classList.add('open');
+      els.editSecret.focus();
+    }
+
+    function closeEditModal() {
+      state.editId = null;
+      els.editModal.classList.remove('open');
+    }
+
+    function saveEditForm(event) {
+      event.preventDefault();
+      const record = state.records.find((item) => item.id === state.editId);
+      if (!record) return;
+
+      const updated = {
+        ...record,
+        label: els.editLabel.value.trim(),
+        issuer: els.editIssuer.value.trim(),
+        secret: normalizeSecret(els.editSecret.value),
+        digits: Number(els.editDigits.value || 6),
+        period: Number(els.editPeriod.value || 30),
+        algorithm: (els.editAlgorithm.value || 'SHA1').toUpperCase()
+      };
+
+      try {
+        assertSecret(updated.secret);
+      } catch (error) {
+        showToast(error.message || 'Secret 不正确');
+        return;
+      }
+
+      if (![6, 7, 8].includes(updated.digits)) updated.digits = 6;
+      if (!Number.isFinite(updated.period) || updated.period < 10) updated.period = 30;
+      if (!['SHA1', 'SHA256', 'SHA512'].includes(updated.algorithm)) updated.algorithm = 'SHA1';
+
+      state.records = state.records.map((item) => item.id === updated.id ? updated : item);
+      state.activeId = updated.id;
+      state.renderedSecond = -1;
+      persistRecords();
+      closeEditModal();
+      render();
+      showToast('已保存');
+    }
+
+    async function openQrModal(record) {
+      try {
+        await ensureQrCode();
+        const otpAuth = buildOtpAuth(record);
+        els.qrTitle.textContent = buildDisplayName(record) || 'Secret';
+        els.qrSecret.dataset.value = record.secret;
+        els.qrOtpAuth.dataset.value = otpAuth;
+        els.qrSecret.querySelector('code').textContent = record.secret;
+        els.qrOtpAuth.querySelector('code').textContent = otpAuth;
+        drawQrToCanvas(els.qrCanvas, otpAuth);
+        els.qrModal.classList.add('open');
+      } catch (error) {
+        showToast(error.message || '二维码生成失败');
+      }
+    }
+
+    function closeQrModal() {
+      els.qrModal.classList.remove('open');
+    }
+
+    function ensureQrCode() {
+      if (window.qrcode) return Promise.resolve();
+      return loadScript(QR_CODE_URL, () => window.qrcode);
+    }
+
+    function drawQrToCanvas(canvas, text) {
+      const qr = window.qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      const count = qr.getModuleCount();
+      const size = canvas.width;
+      const quiet = 4;
+      const moduleSize = Math.floor(size / (count + quiet * 2));
+      const qrSize = moduleSize * count;
+      const offset = Math.floor((size - qrSize) / 2);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#111827';
+      for (let row = 0; row < count; row += 1) {
+        for (let col = 0; col < count; col += 1) {
+          if (qr.isDark(row, col)) {
+            ctx.fillRect(offset + col * moduleSize, offset + row * moduleSize, moduleSize, moduleSize);
+          }
+        }
+      }
+    }
+
+    function loadScript(src, ready) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+          existing.addEventListener('load', () => ready() ? resolve() : reject(new Error('脚本加载失败')), { once: true });
+          existing.addEventListener('error', () => reject(new Error('脚本加载失败')), { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => ready() ? resolve() : reject(new Error('脚本加载失败'));
+        script.onerror = () => reject(new Error('脚本加载失败'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function generateTotp(secret, options = {}, time = Date.now()) {
+      const period = Number(options.period || 30);
+      const digits = Number(options.digits || 6);
+      const algorithm = String(options.algorithm || 'SHA1').toUpperCase();
+      const counter = Math.floor(time / 1000 / period);
+      const keyBytes = base32Decode(secret);
+      const counterBytes = new ArrayBuffer(8);
+      const view = new DataView(counterBytes);
+      view.setUint32(4, counter, false);
+      const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: algorithm.replace('SHA', 'SHA-') }, false, ['sign']);
+      const signature = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBytes));
+      const offset = signature[signature.length - 1] & 0x0f;
+      const binary = ((signature[offset] & 0x7f) << 24) |
+        ((signature[offset + 1] & 0xff) << 16) |
+        ((signature[offset + 2] & 0xff) << 8) |
+        (signature[offset + 3] & 0xff);
+      const otp = binary % (10 ** digits);
+      return String(otp).padStart(digits, '0');
+    }
+
+    function base32Decode(secret) {
+      const clean = normalizeSecret(secret);
+      assertSecret(clean);
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      let bits = '';
+      for (const char of clean) {
+        const value = alphabet.indexOf(char);
+        if (value < 0) throw new Error('Secret 不是有效的 Base32');
+        bits += value.toString(2).padStart(5, '0');
+      }
+      const bytes = [];
+      for (let i = 0; i + 8 <= bits.length; i += 8) {
+        bytes.push(parseInt(bits.slice(i, i + 8), 2));
+      }
+      return new Uint8Array(bytes);
+    }
+
+    function buildOtpAuth(record) {
+      const issuerPrefix = record.issuer ? `${record.issuer}:` : '';
+      const labelName = record.label || record.issuer || 'Secret';
+      const label = encodeURIComponent(`${issuerPrefix}${labelName}`);
+      const params = new URLSearchParams({
+        secret: normalizeSecret(record.secret),
+        issuer: record.issuer || '',
+        algorithm: record.algorithm || 'SHA1',
+        digits: String(record.digits || 6),
+        period: String(record.period || 30)
+      });
+      return `otpauth://totp/${label}?${params.toString()}`;
+    }
+
+    function buildShareLink(record) {
+      const base = window.location.protocol === 'file:'
+        ? window.location.href.split('?')[0].split('#')[0]
+        : `${window.location.origin}${window.location.pathname}`;
+      return `${base}?url=${encodeURIComponent(buildOtpAuth(record))}`;
+    }
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const json = utf8FromBase64(raw);
+        const records = JSON.parse(json);
+        if (!Array.isArray(records)) return [];
+        return records.map((record) => ({ ...record, secret: normalizeSecret(record.secret) })).filter((record) => {
+          try {
+            assertSecret(record.secret);
+            return true;
+          } catch {
+            return false;
+          }
+        });
+      } catch {
+        return [];
+      }
+    }
+
+    function persistRecords() {
+      try {
+        localStorage.setItem(STORAGE_KEY, base64FromUtf8(JSON.stringify(state.records)));
+      } catch {
+        showToast('localStorage 写入失败');
+      }
+    }
+
+    function normalizeSecret(secret) {
+      return String(secret || '').toUpperCase().replace(/[\s=-]/g, '');
+    }
+
+    function assertSecret(secret) {
+      if (!secret || secret.length < 8) throw new Error('Secret 太短');
+      if (!/^[A-Z2-7]+$/.test(secret)) throw new Error('Secret 只能包含 Base32 字符 A-Z 和 2-7');
+    }
+
+    function recordKey(record) {
+      return `${normalizeSecret(record.secret)}|${record.issuer || ''}|${record.label || ''}`;
+    }
+
+    function getActiveRecord() {
+      return state.records.find((item) => item.id === state.activeId) || state.records[0] || null;
+    }
+
+    async function copyText(text) {
+      if (!text) return;
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        window.getSelection()?.removeAllRanges();
+        return;
+      }
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      window.getSelection()?.removeAllRanges();
+      textarea.remove();
+    }
+
+    function showToast(message) {
+      window.clearTimeout(state.toastTimer);
+      els.toast.textContent = message;
+      els.toast.classList.add('show');
+      state.toastTimer = window.setTimeout(() => els.toast.classList.remove('show'), 1800);
+    }
+
+    function safeDecode(text) {
+      try {
+        return decodeURIComponent(text);
+      } catch {
+        return text;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char]);
+    }
+
+    function base64FromUtf8(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.slice(i, i + 0x8000));
+      }
+      return btoa(binary);
+    }
+
+    function utf8FromBase64(text) {
+      const binary = atob(text);
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+  </script>
+</body>
+</html>

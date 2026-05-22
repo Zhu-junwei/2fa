@@ -1,0 +1,12 @@
+{
+  "name": "totp-2fa-tool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "dev:8787": "npx wrangler dev --port 8787",
+    "start": "node server.js",
+    "deploy": "npx wrangler deploy"
+  }
+}
