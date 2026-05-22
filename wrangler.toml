@@ -1,4 +1,4 @@
-name = "totp-2fa-tool"
+name = "2fa"
 main = "worker/index.js"
 compatibility_date = "2026-05-22"
 
