@@ -1472,12 +1472,11 @@
     }
 
     function renderApiExamples() {
-      const active = getActiveRecord();
       const base = window.location.protocol === 'file:'
         ? 'https://your-domain.example'
         : `${window.location.origin}${window.location.pathname}`;
-      const secret = active?.secret || 'JBSWY3DPEHPK3PXP';
-      const otpAuth = active ? buildOtpAuth(active) : 'otpauth://totp/Demo?secret=JBSWY3DPEHPK3PXP&issuer=Demo';
+      const secret = 'JBSWY3DPEHPK3PXP';
+      const otpAuth = 'otpauth://totp/Demo?secret=JBSWY3DPEHPK3PXP&issuer=Demo';
       const textUrl = `${base}?secret=${encodeURIComponent(secret)}&format=text`;
       const jsonUrl = `${base}?secret=${encodeURIComponent(secret)}&format=json`;
       const otpAuthUrl = `${base}?url=${encodeURIComponent(otpAuth)}&format=otpauth`;
