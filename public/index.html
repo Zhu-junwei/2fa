@@ -112,8 +112,22 @@
       text-align: center;
     }
 
-    .footer-slogan {
-      margin: 0;
+    .footer-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .feature-tag {
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.72);
     }
 
     .footer-links {
@@ -313,11 +327,17 @@
       text-align: left;
       user-select: none;
       border-radius: 8px;
-      transition: color 140ms ease;
+      transition: color 140ms ease, text-shadow 140ms ease;
     }
 
     .secret-line:hover {
       color: var(--accent);
+      text-shadow: 0 0 0 currentColor;
+    }
+
+    .secret-line.copied {
+      color: #047857;
+      text-shadow: 0.35px 0 0 currentColor;
     }
 
     .quick-actions {
@@ -543,11 +563,17 @@
       text-align: left;
       user-select: none;
       border-radius: 7px;
-      transition: color 140ms ease;
+      transition: color 140ms ease, text-shadow 140ms ease;
     }
 
     .record-secret:hover {
       color: var(--accent);
+      text-shadow: 0 0 0 currentColor;
+    }
+
+    .record-secret.copied {
+      color: #047857;
+      text-shadow: 0.35px 0 0 currentColor;
     }
 
     .mini-code {
@@ -647,6 +673,7 @@
     .scan-panel {
       width: min(360px, 100%);
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 12px;
       padding: 18px;
       border-radius: 18px;
@@ -688,6 +715,7 @@
     .confirm-panel {
       width: min(420px, 100%);
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 12px;
       padding: 18px;
       border-radius: 18px;
@@ -703,6 +731,7 @@
     }
 
     .qr-head {
+      min-width: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -710,6 +739,7 @@
     }
 
     .qr-head strong {
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -761,11 +791,17 @@
     }
 
     .copy-list {
+      min-width: 0;
+      max-width: 100%;
+      justify-self: stretch;
       display: grid;
       gap: 8px;
     }
 
     .copy-row {
+      min-width: 0;
+      max-width: 100%;
+      justify-self: stretch;
       display: grid;
       grid-template-columns: 54px minmax(0, 1fr);
       gap: 8px;
@@ -780,11 +816,13 @@
     }
 
     .copy-row span {
+      min-width: 0;
       color: var(--muted);
       font-size: 12px;
     }
 
     .copy-row code {
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -863,7 +901,10 @@
 
     #qrCanvas {
       width: 100%;
+      max-width: 300px;
       height: auto;
+      display: block;
+      justify-self: center;
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 10px;
@@ -953,7 +994,12 @@
       <div id="records" class="records"></div>
     </section>
     <div class="home-footer">
-      <p class="footer-slogan">本地解析、快速扫码、多行批量导入；密钥只留在你的浏览器里。</p>
+      <div class="footer-tags" aria-label="工具特点">
+        <span class="feature-tag">本地解析</span>
+        <span class="feature-tag">快速扫码</span>
+        <span class="feature-tag">多行批量导入</span>
+        <span class="feature-tag">浏览器内保存</span>
+      </div>
       <div class="footer-links">
         <button id="apiLink" class="api-link" type="button">API 调用示例</button>
         <a class="footer-link" href="https://github.com/Zhu-junwei/2fa" target="_blank" rel="noreferrer">
@@ -1139,6 +1185,7 @@
       window.addEventListener('hashchange', renderRoute);
       els.parseBtn.addEventListener('click', () => addFromText(els.input.value));
       els.input.addEventListener('paste', handleInputPaste);
+      els.input.addEventListener('keydown', handleInputKeydown);
       els.scanBtn.addEventListener('click', openScanModal);
       els.imageBtn.addEventListener('click', () => openFilePicker(els.qrInput));
       els.clearRecords.addEventListener('click', openClearModal);
@@ -1150,7 +1197,10 @@
         if (event.target === els.scanModal) closeScanModal();
       });
       els.qrClose.addEventListener('click', closeQrModal);
-      els.qrSecret.addEventListener('click', () => copyText(els.qrSecret.dataset.value || '').then(() => showToast('Secret 已复制')));
+      els.qrSecret.addEventListener('click', () => copyText(els.qrSecret.dataset.value || '').then(() => {
+        flashCopied(els.qrSecret);
+        showToast('Secret 已复制');
+      }));
       els.qrOtpAuth.addEventListener('click', () => copyText(els.qrOtpAuth.dataset.value || '').then(() => showToast('otpauth 已复制')));
       els.qrModal.addEventListener('click', (event) => {
         if (event.target === els.qrModal) closeQrModal();
@@ -1186,6 +1236,12 @@
       } catch {
         return;
       }
+    }
+
+    function handleInputKeydown(event) {
+      if (event.key !== 'Enter' || event.isComposing) return;
+      event.preventDefault();
+      addFromText(els.input.value);
     }
 
     async function animate() {
@@ -1581,7 +1637,10 @@
         return;
       }
       if (action === 'copy-secret') {
-        copyText(record.secret).then(() => showToast('Secret 已复制'));
+        copyText(record.secret).then(() => {
+          flashCopied(button);
+          showToast('Secret 已复制');
+        });
         return;
       }
       if (action === 'edit') {
@@ -1996,19 +2055,26 @@
       qr.addData(text);
       qr.make();
       const count = qr.getModuleCount();
-      const size = canvas.width;
+      const size = Math.min(canvas.width, canvas.height);
       const quiet = 4;
       const moduleSize = Math.floor(size / (count + quiet * 2));
-      const qrSize = moduleSize * count;
-      const offset = Math.floor((size - qrSize) / 2);
+      const totalSize = moduleSize * (count + quiet * 2);
+      const startX = Math.floor((canvas.width - totalSize) / 2) + quiet * moduleSize;
+      const startY = Math.floor((canvas.height - totalSize) / 2) + quiet * moduleSize;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, size, size);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#111827';
       for (let row = 0; row < count; row += 1) {
         for (let col = 0; col < count; col += 1) {
           if (qr.isDark(row, col)) {
-            ctx.fillRect(offset + col * moduleSize, offset + row * moduleSize, moduleSize, moduleSize);
+            ctx.fillRect(
+              startX + col * moduleSize,
+              startY + row * moduleSize,
+              moduleSize,
+              moduleSize
+            );
           }
         }
       }
@@ -2157,6 +2223,11 @@
       document.execCommand('copy');
       window.getSelection()?.removeAllRanges();
       textarea.remove();
+    }
+
+    function flashCopied(element) {
+      element.classList.add('copied');
+      window.setTimeout(() => element.classList.remove('copied'), 900);
     }
 
     function showToast(message) {
