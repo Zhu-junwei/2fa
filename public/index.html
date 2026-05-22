@@ -29,6 +29,10 @@
       box-sizing: border-box;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -97,10 +101,51 @@
     }
 
     .home-footer {
-      width: min(560px, 100%);
+      width: min(680px, 100%);
       margin: 18px auto 0;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      color: var(--subtle);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .footer-slogan {
+      margin: 0;
+    }
+
+    .footer-links {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
+      gap: 8px;
+    }
+
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    .footer-link:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+    }
+
+    .github-mark {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+      stroke: none;
     }
 
     .search-input {
@@ -108,7 +153,7 @@
       height: 56px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 0 98px 0 22px;
+      padding: 0 138px 0 22px;
       outline: none;
       color: var(--text);
       background: var(--surface);
@@ -155,6 +200,17 @@
       background: #fee2e2;
     }
 
+    .icon-btn:disabled {
+      cursor: not-allowed;
+      color: var(--subtle);
+      opacity: 0.45;
+    }
+
+    .icon-btn:disabled:hover {
+      color: var(--subtle);
+      background: none;
+    }
+
     .icon {
       width: 20px;
       height: 20px;
@@ -167,7 +223,13 @@
     }
 
     .file-input {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .current {
@@ -184,6 +246,13 @@
       border-radius: 16px;
       background: var(--surface);
       box-shadow: var(--shadow);
+      transition: border-color 700ms ease, box-shadow 700ms ease, background-color 700ms ease;
+    }
+
+    .current-card.urgent {
+      border-color: rgba(220, 38, 38, 0.44);
+      background: #fffafa;
+      box-shadow: 0 18px 54px rgba(220, 38, 38, 0.14);
     }
 
     .empty {
@@ -243,6 +312,12 @@
       letter-spacing: 0;
       text-align: left;
       user-select: none;
+      border-radius: 8px;
+      transition: color 140ms ease;
+    }
+
+    .secret-line:hover {
+      color: var(--accent);
     }
 
     .quick-actions {
@@ -274,6 +349,34 @@
       font-variant-numeric: tabular-nums;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      transition: color 700ms ease, border-color 700ms ease, background-color 700ms ease, box-shadow 700ms ease;
+    }
+
+    .current-card.urgent .totp-code {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.5);
+      background: #fff1f2;
+      box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.08);
+    }
+
+    .totp-code:hover {
+      color: var(--accent);
+      border-color: rgba(15, 159, 143, 0.48);
+      background: #effdfa;
+      box-shadow: 0 14px 28px rgba(15, 159, 143, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .totp-code:active {
+      transform: translateY(0);
+      box-shadow: inset 0 0 0 1px rgba(15, 159, 143, 0.1);
+    }
+
+    .current-card.urgent .totp-code:hover {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.58);
+      background: #ffe4e6;
+      box-shadow: 0 14px 28px rgba(220, 38, 38, 0.14);
     }
 
     .timer {
@@ -290,6 +393,12 @@
       color: var(--muted);
       font-size: 12px;
       font-variant-numeric: tabular-nums;
+      transition: color 700ms ease;
+    }
+
+    .current-card.urgent .timer-top,
+    .current-card.urgent .hint {
+      color: var(--danger);
     }
 
     .bar {
@@ -307,6 +416,11 @@
       transform-origin: left center;
       transform: scaleX(var(--progress, 0));
       will-change: transform;
+      transition: background 700ms ease;
+    }
+
+    .current-card.urgent .bar-fill {
+      background: linear-gradient(90deg, #ef4444, var(--danger));
     }
 
     .hint {
@@ -336,6 +450,22 @@
       font-weight: 720;
     }
 
+    .history-tools {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .history-tools .icon-btn {
+      width: 30px;
+      height: 30px;
+    }
+
+    .history-tools .icon {
+      width: 17px;
+      height: 17px;
+    }
+
     .records {
       display: grid;
       gap: 6px;
@@ -351,11 +481,24 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       background: var(--surface);
+      transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
     }
 
     .record.active {
       border-color: rgba(15, 159, 143, 0.34);
       background: linear-gradient(0deg, rgba(15, 159, 143, 0.05), rgba(15, 159, 143, 0.05)), var(--surface);
+    }
+
+    .record:hover {
+      border-color: rgba(15, 159, 143, 0.42);
+      background: linear-gradient(0deg, rgba(15, 159, 143, 0.07), rgba(15, 159, 143, 0.07)), var(--surface);
+      box-shadow: 0 10px 24px rgba(15, 159, 143, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .record.active:hover {
+      border-color: rgba(15, 159, 143, 0.56);
+      background: linear-gradient(0deg, rgba(15, 159, 143, 0.1), rgba(15, 159, 143, 0.1)), var(--surface);
     }
 
     .record-info {
@@ -399,6 +542,12 @@
       letter-spacing: 0;
       text-align: left;
       user-select: none;
+      border-radius: 7px;
+      transition: color 140ms ease;
+    }
+
+    .record-secret:hover {
+      color: var(--accent);
     }
 
     .mini-code {
@@ -414,6 +563,30 @@
       font-variant-numeric: tabular-nums;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      transition: color 700ms ease, border-color 700ms ease, background-color 700ms ease;
+    }
+
+    .record.urgent .mini-code {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.46);
+      background: #fff1f2;
+    }
+
+    .mini-code:hover {
+      color: var(--accent);
+      border-color: rgba(15, 159, 143, 0.46);
+      background: #effdfa;
+      transform: translateY(-1px);
+    }
+
+    .mini-code:active {
+      transform: translateY(0);
+    }
+
+    .record.urgent .mini-code:hover {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.56);
+      background: #ffe4e6;
     }
 
     .record-actions {
@@ -470,7 +643,8 @@
       display: grid;
     }
 
-    .qr-panel {
+    .qr-panel,
+    .scan-panel {
       width: min(360px, 100%);
       display: grid;
       gap: 12px;
@@ -480,7 +654,38 @@
       box-shadow: 0 24px 80px rgba(17, 24, 39, 0.2);
     }
 
-    .edit-panel {
+    .scan-panel {
+      width: min(420px, 100%);
+    }
+
+    .scan-video-wrap {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #111827;
+    }
+
+    .scan-video-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border: 2px solid rgba(255, 255, 255, 0.78);
+      border-radius: 18px;
+      box-shadow: 0 0 0 999px rgba(17, 24, 39, 0.16);
+      pointer-events: none;
+    }
+
+    .scan-video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .edit-panel,
+    .confirm-panel {
       width: min(420px, 100%);
       display: grid;
       gap: 12px;
@@ -488,6 +693,13 @@
       border-radius: 18px;
       background: var(--surface);
       box-shadow: 0 24px 80px rgba(17, 24, 39, 0.2);
+    }
+
+    .confirm-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
     }
 
     .qr-head {
@@ -667,7 +879,7 @@
       .search-input {
         height: 52px;
         padding-left: 18px;
-        padding-right: 88px;
+        padding-right: 124px;
       }
 
       .current-card {
@@ -704,8 +916,11 @@
       <img class="brand-icon" src="favicon.svg" width="58" height="58" alt="" aria-hidden="true">
       <h1 class="brand">2FA TOTP</h1>
       <div class="search-wrap">
-        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入 Secret、otpauth 链接，按 Enter 解析">
+        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入或粘贴 Secret / otpauth">
         <div class="search-actions">
+          <button id="scanBtn" class="icon-btn" type="button" title="扫描二维码" aria-label="扫描二维码">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 8h10"></path><path d="M7 12h10"></path><path d="M7 16h6"></path></svg>
+          </button>
           <button id="imageBtn" class="icon-btn" type="button" title="读取二维码图片" aria-label="读取二维码图片">
             <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10.5" r="1.5"></circle><path d="m21 15-5-5L5 19"></path></svg>
           </button>
@@ -714,6 +929,7 @@
           </button>
         </div>
         <input id="qrInput" class="file-input" type="file" accept="image/*" aria-hidden="true" tabindex="-1">
+        <input id="cameraInput" class="file-input" type="file" accept="image/*" capture="environment" aria-hidden="true" tabindex="-1">
       </div>
     </section>
 
@@ -724,12 +940,27 @@
     <section class="history" aria-label="历史记录">
       <div class="history-head">
         <h2>历史记录</h2>
-        <span id="recordCount">0 条</span>
+        <div class="history-tools">
+          <span id="recordCount">0 条</span>
+          <button id="clearRecords" class="icon-btn danger" type="button" title="清空历史记录" aria-label="清空历史记录" disabled>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path><path d="M10 11v5"></path><path d="M14 11v5"></path></svg>
+          </button>
+          <button id="exportRecords" class="icon-btn" type="button" title="导出历史记录" aria-label="导出历史记录" hidden>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+          </button>
+        </div>
       </div>
       <div id="records" class="records"></div>
     </section>
     <div class="home-footer">
-      <button id="apiLink" class="api-link" type="button">API 调用示例</button>
+      <p class="footer-slogan">本地解析、快速扫码、多行批量导入；密钥只留在你的浏览器里。</p>
+      <div class="footer-links">
+        <button id="apiLink" class="api-link" type="button">API 调用示例</button>
+        <a class="footer-link" href="https://github.com/Zhu-junwei/2fa" target="_blank" rel="noreferrer">
+          <svg class="github-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.011-1.232-.017-2.235-3.338.724-4.042-1.416-4.042-1.416-.546-1.386-1.333-1.755-1.333-1.755-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.236 1.839 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.381 1.235-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 6.098c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.119 3.176.769.84 1.234 1.911 1.234 3.221 0 4.609-2.807 5.625-5.479 5.921.43.372.823 1.102.823 2.222 0 1.605-.015 2.898-.015 3.293 0 .322.216.696.825.578C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+          GitHub
+        </a>
+      </div>
     </div>
     </div>
 
@@ -782,7 +1013,38 @@
     </form>
   </div>
 
+  <div id="clearModal" class="modal" role="dialog" aria-modal="true" aria-label="清空历史记录">
+    <div class="confirm-panel">
+      <div class="qr-head">
+        <strong>清空历史记录</strong>
+        <button id="clearClose" class="icon-btn" type="button" title="关闭" aria-label="关闭清空确认">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <p>这会删除当前浏览器里保存的所有 2FA 记录。需要保留的话，可以先导出。</p>
+      <div class="edit-actions">
+        <button id="clearCancel" class="text-btn" type="button">取消</button>
+        <button id="clearConfirm" class="text-btn primary" type="button">清空</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="scanModal" class="modal" role="dialog" aria-modal="true" aria-label="扫描二维码">
+    <div class="scan-panel">
+      <div class="qr-head">
+        <strong>扫描二维码</strong>
+        <button id="scanClose" class="icon-btn" type="button" title="关闭" aria-label="关闭扫描">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <div class="scan-video-wrap">
+        <video id="scanVideo" class="scan-video" autoplay muted playsinline></video>
+      </div>
+      <div id="scanStatus" class="hint">请允许浏览器使用相机，然后把二维码放入取景框。</div>
+    </div>
+  </div>
 
   <script>
     const STORAGE_KEY = 'totp-records-v1';
@@ -795,7 +1057,12 @@
       toastTimer: null,
       raf: 0,
       renderedSecond: -1,
-      editId: null
+      editId: null,
+      scanStream: null,
+      scanRaf: 0,
+      scanDetector: null,
+      scanBusy: false,
+      scanToken: 0
     };
 
     const icons = {
@@ -814,11 +1081,15 @@
       backHome: document.getElementById('backHome'),
       apiExamples: document.getElementById('apiExamples'),
       parseBtn: document.getElementById('parseBtn'),
+      scanBtn: document.getElementById('scanBtn'),
       imageBtn: document.getElementById('imageBtn'),
       qrInput: document.getElementById('qrInput'),
+      cameraInput: document.getElementById('cameraInput'),
       currentPanel: document.getElementById('currentPanel'),
       records: document.getElementById('records'),
       recordCount: document.getElementById('recordCount'),
+      clearRecords: document.getElementById('clearRecords'),
+      exportRecords: document.getElementById('exportRecords'),
       toast: document.getElementById('toast'),
       qrModal: document.getElementById('qrModal'),
       qrCanvas: document.getElementById('qrCanvas'),
@@ -835,7 +1106,15 @@
       editSecret: document.getElementById('editSecret'),
       editDigits: document.getElementById('editDigits'),
       editPeriod: document.getElementById('editPeriod'),
-      editAlgorithm: document.getElementById('editAlgorithm')
+      editAlgorithm: document.getElementById('editAlgorithm'),
+      clearModal: document.getElementById('clearModal'),
+      clearClose: document.getElementById('clearClose'),
+      clearCancel: document.getElementById('clearCancel'),
+      clearConfirm: document.getElementById('clearConfirm'),
+      scanModal: document.getElementById('scanModal'),
+      scanClose: document.getElementById('scanClose'),
+      scanVideo: document.getElementById('scanVideo'),
+      scanStatus: document.getElementById('scanStatus')
     };
 
     init();
@@ -859,14 +1138,17 @@
       });
       window.addEventListener('hashchange', renderRoute);
       els.parseBtn.addEventListener('click', () => addFromText(els.input.value));
-      els.imageBtn.addEventListener('click', () => els.qrInput.click());
-      els.input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          addFromText(els.input.value);
-        }
-      });
+      els.input.addEventListener('paste', handleInputPaste);
+      els.scanBtn.addEventListener('click', openScanModal);
+      els.imageBtn.addEventListener('click', () => openFilePicker(els.qrInput));
+      els.clearRecords.addEventListener('click', openClearModal);
+      els.exportRecords.addEventListener('click', exportAllRecords);
       els.qrInput.addEventListener('change', handleQrUpload);
+      els.cameraInput.addEventListener('change', handleQrUpload);
+      els.scanClose.addEventListener('click', closeScanModal);
+      els.scanModal.addEventListener('click', (event) => {
+        if (event.target === els.scanModal) closeScanModal();
+      });
       els.qrClose.addEventListener('click', closeQrModal);
       els.qrSecret.addEventListener('click', () => copyText(els.qrSecret.dataset.value || '').then(() => showToast('Secret 已复制')));
       els.qrOtpAuth.addEventListener('click', () => copyText(els.qrOtpAuth.dataset.value || '').then(() => showToast('otpauth 已复制')));
@@ -879,12 +1161,31 @@
       els.editModal.addEventListener('click', (event) => {
         if (event.target === els.editModal) closeEditModal();
       });
+      els.clearClose.addEventListener('click', closeClearModal);
+      els.clearCancel.addEventListener('click', closeClearModal);
+      els.clearConfirm.addEventListener('click', clearAllRecords);
+      els.clearModal.addEventListener('click', (event) => {
+        if (event.target === els.clearModal) closeClearModal();
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
+          closeScanModal();
           closeQrModal();
           closeEditModal();
+          closeClearModal();
         }
       });
+    }
+
+    function handleInputPaste(event) {
+      const text = event.clipboardData?.getData('text') || '';
+      try {
+        if (splitBatchInput(text).length <= 1) return;
+        event.preventDefault();
+        addFromText(text);
+      } catch {
+        return;
+      }
     }
 
     async function animate() {
@@ -902,8 +1203,7 @@
         if (wholeSecond !== state.renderedSecond) {
           state.renderedSecond = wholeSecond;
           await refreshCodes(now);
-          renderCurrent();
-          renderRecords();
+          updateDynamicCodeViews(now);
         }
       }
       state.raf = requestAnimationFrame(animate);
@@ -920,18 +1220,90 @@
       }));
     }
 
+    function updateDynamicCodeViews(now = Date.now()) {
+      const active = getActiveRecord();
+      if (active) {
+        const currentCard = els.currentPanel.querySelector('.current-card');
+        currentCard?.classList.toggle('urgent', getRemainingSeconds(active, now) <= 5);
+
+        const currentCode = els.currentPanel.querySelector('.totp-code[data-action="copy-code"]');
+        if (currentCode) {
+          currentCode.textContent = state.codes.get(active.id) || ''.padStart(active.digits || 6, '·');
+        }
+      }
+
+      els.records.querySelectorAll('.record').forEach((recordEl) => {
+        const codeButton = recordEl.querySelector('.mini-code[data-action="copy-code"]');
+        const record = state.records.find((item) => item.id === codeButton?.dataset.id);
+        if (!record || !codeButton) return;
+
+        recordEl.classList.toggle('urgent', getRemainingSeconds(record, now) <= 5);
+        codeButton.textContent = state.codes.get(record.id) || ''.padStart(record.digits || 6, '·');
+      });
+    }
+
     function addFromText(raw) {
       try {
-        const record = parseInput(raw);
-        saveRecord(record);
+        const inputs = splitBatchInput(raw);
+        let successCount = 0;
+        const errors = [];
+
+        inputs.forEach((input) => {
+          try {
+            saveRecord(parseInput(input), { render: false });
+            successCount += 1;
+          } catch (error) {
+            errors.push(error);
+          }
+        });
+
+        if (!successCount) {
+          throw errors[0] || new Error('无法解析输入');
+        }
+
         els.input.value = '';
-        showToast('已解析');
+        persistRecords();
+        render();
+
+        if (inputs.length === 1) {
+          showToast('已解析');
+        } else if (errors.length) {
+          showToast(`已解析 ${successCount} 条，${errors.length} 条失败`);
+        } else {
+          showToast(`已解析 ${successCount} 条`);
+        }
       } catch (error) {
         showToast(error.message || '无法解析输入');
       }
     }
 
-    function saveRecord(record) {
+    function splitBatchInput(raw) {
+      const text = String(raw || '').trim();
+      if (!text) throw new Error('请输入 Secret 或 otpauth 链接');
+
+      const otpAuthMatches = text.match(/otpauth:\/\/\S+/gi);
+      if (otpAuthMatches?.length > 1) {
+        return otpAuthMatches.map(cleanBatchItem);
+      }
+
+      const lines = text
+        .split(/\r?\n/)
+        .map(cleanBatchItem)
+        .filter(Boolean);
+
+      return lines.length ? lines : [text];
+    }
+
+    function cleanBatchItem(value) {
+      return String(value || '')
+        .trim()
+        .replace(/^[\s>*-]*\d+[.)、]\s*/, '')
+        .replace(/^[\s>*-]+/, '')
+        .replace(/[，,;；]+$/, '')
+        .trim();
+    }
+
+    function saveRecord(record, options = {}) {
       const normalized = {
         id: record.id || crypto.randomUUID(),
         label: record.label || '',
@@ -960,8 +1332,10 @@
 
       state.activeId = normalized.id;
       state.renderedSecond = -1;
-      persistRecords();
-      render();
+      if (options.render !== false) {
+        persistRecords();
+        render();
+      }
     }
 
     function deleteRecord(id) {
@@ -984,6 +1358,54 @@
       renderRecords();
       renderApiExamples();
       els.recordCount.textContent = `${state.records.length} 条`;
+      els.clearRecords.disabled = !state.records.length;
+      els.exportRecords.hidden = !state.records.length;
+      if (!state.records.length) closeClearModal();
+    }
+
+    function openClearModal() {
+      if (!state.records.length) return;
+      els.clearModal.classList.add('open');
+    }
+
+    function closeClearModal() {
+      els.clearModal.classList.remove('open');
+    }
+
+    function clearAllRecords() {
+      if (!state.records.length) return;
+      state.records = [];
+      state.activeId = null;
+      state.codes.clear();
+      state.renderedSecond = -1;
+      persistRecords();
+      closeClearModal();
+      render();
+      showToast('历史记录已清空');
+    }
+
+    function exportAllRecords() {
+      if (!state.records.length) {
+        showToast('没有可导出的历史记录');
+        return;
+      }
+
+      const content = state.records.map(buildOtpAuth).join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `2fa-totp-${formatExportTimestamp()}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(`已导出 ${state.records.length} 条`);
+    }
+
+    function formatExportTimestamp(date = new Date()) {
+      const pad = (value) => String(value).padStart(2, '0');
+      return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
     }
 
     function renderRoute() {
@@ -1079,8 +1501,9 @@
 
       const code = state.codes.get(active.id) || ''.padStart(active.digits || 6, '·');
       const identityHtml = renderIdentityHtml(active);
+      const urgentClass = getRemainingSeconds(active) <= 5 ? ' urgent' : '';
       els.currentPanel.innerHTML = `
-        <div class="current-card">
+        <div class="current-card${urgentClass}">
           <div class="meta-line">
             <div class="info-stack">
               ${identityHtml}
@@ -1116,9 +1539,10 @@
       els.records.innerHTML = state.records.map((record) => {
         const code = state.codes.get(record.id) || ''.padStart(record.digits || 6, '·');
         const activeClass = record.id === state.activeId ? ' active' : '';
+        const urgentClass = getRemainingSeconds(record) <= 5 ? ' urgent' : '';
         const identityHtml = renderIdentityHtml(record);
         return `
-          <article class="record${activeClass}">
+          <article class="record${activeClass}${urgentClass}">
             <div class="record-info">
               ${identityHtml ? `<button class="record-title" type="button" data-action="activate" data-id="${record.id}" title="切换当前验证码">${identityHtml}</button>` : ''}
               <button class="record-secret" type="button" data-action="copy-secret" data-id="${record.id}" title="点击复制 Secret">${escapeHtml(record.secret)}</button>
@@ -1300,18 +1724,182 @@
       }
     }
 
-    async function decodeQrFromImage(file) {
-      const bitmap = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(bitmap, 0, 0);
+    async function openScanModal() {
+      if (!canUseLiveCamera()) {
+        if (shouldUseCameraCaptureFallback()) {
+          openCameraCapture('当前浏览器不支持实时扫描，改用系统相机拍照扫描');
+        } else {
+          showToast('当前浏览器无法直接打开相机，请检查权限或用 HTTPS 访问');
+        }
+        return;
+      }
 
+      try {
+        const token = state.scanToken + 1;
+        state.scanToken = token;
+        els.scanStatus.textContent = '正在打开相机...';
+        els.scanModal.classList.add('open');
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' }
+          },
+          audio: false
+        });
+        if (token !== state.scanToken || !els.scanModal.classList.contains('open')) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        state.scanStream = stream;
+        els.scanVideo.srcObject = stream;
+        await els.scanVideo.play();
+        els.scanStatus.textContent = '将二维码放入取景框，识别成功后会自动导入。';
+        scanVideoFrame();
+      } catch (error) {
+        closeScanModal();
+        if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') {
+          showToast('相机权限受限，请允许权限后重试');
+        } else if (shouldUseCameraCaptureFallback()) {
+          openCameraCapture('实时扫描不可用，改用系统相机拍照扫描');
+        } else {
+          showToast('无法打开相机，请检查浏览器权限');
+        }
+      }
+    }
+
+    function canUseLiveCamera() {
+      return Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
+    }
+
+    function shouldUseCameraCaptureFallback() {
+      const ua = navigator.userAgent || navigator.vendor || '';
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua) ||
+        (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+      return Boolean(isMobile && els.cameraInput);
+    }
+
+    function openCameraCapture(message = '使用系统相机拍照扫描') {
+      showToast(message);
+      openFilePicker(els.cameraInput);
+    }
+
+    function openFilePicker(input) {
+      input.value = '';
+      input.click();
+    }
+
+    function closeScanModal() {
+      state.scanToken += 1;
+      if (state.scanRaf) {
+        cancelAnimationFrame(state.scanRaf);
+        state.scanRaf = 0;
+      }
+      if (state.scanStream) {
+        state.scanStream.getTracks().forEach((track) => track.stop());
+        state.scanStream = null;
+      }
+      state.scanBusy = false;
+      els.scanVideo.srcObject = null;
+      els.scanStatus.textContent = '请允许浏览器使用相机，然后把二维码放入取景框。';
+      els.scanModal.classList.remove('open');
+    }
+
+    async function scanVideoFrame() {
+      if (!state.scanStream || state.scanBusy) {
+        state.scanRaf = requestAnimationFrame(scanVideoFrame);
+        return;
+      }
+      if (!els.scanVideo.videoWidth || !els.scanVideo.videoHeight) {
+        state.scanRaf = requestAnimationFrame(scanVideoFrame);
+        return;
+      }
+
+      state.scanBusy = true;
+      try {
+        const content = await decodeQrFromVideo(els.scanVideo);
+        if (content) {
+          closeScanModal();
+          addFromText(content);
+          return;
+        }
+      } catch {
+        els.scanStatus.textContent = '正在识别...';
+      } finally {
+        state.scanBusy = false;
+      }
+
+      if (state.scanStream) {
+        state.scanRaf = requestAnimationFrame(scanVideoFrame);
+      }
+    }
+
+    async function decodeQrFromImage(file) {
+      const source = await loadImageSource(file);
+      const maxSize = 1800;
+      const scale = Math.min(1, maxSize / Math.max(source.width, source.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(source.width * scale));
+      canvas.height = Math.max(1, Math.round(source.height * scale));
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(source.image, 0, 0, canvas.width, canvas.height);
+      source.close?.();
+      return decodeQrFromCanvas(canvas);
+    }
+
+    async function loadImageSource(file) {
+      if (typeof createImageBitmap === 'function') {
+        try {
+          const bitmap = await createImageBitmap(file);
+          return {
+            image: bitmap,
+            width: bitmap.width,
+            height: bitmap.height,
+            close: () => bitmap.close?.()
+          };
+        } catch {
+          // Fall through to HTMLImageElement for mobile browser compatibility.
+        }
+      }
+
+      const url = URL.createObjectURL(file);
+      try {
+        const image = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('图片读取失败'));
+          img.src = url;
+        });
+        return {
+          image,
+          width: image.naturalWidth || image.width,
+          height: image.naturalHeight || image.height,
+          close: () => URL.revokeObjectURL(url)
+        };
+      } catch (error) {
+        URL.revokeObjectURL(url);
+        throw error;
+      }
+    }
+
+    async function decodeQrFromVideo(video) {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return decodeQrFromCanvas(canvas);
+    }
+
+    async function decodeQrFromCanvas(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if ('BarcodeDetector' in window) {
-        const detector = new BarcodeDetector({ formats: ['qr_code'] });
-        const results = await detector.detect(canvas);
-        if (results[0]?.rawValue) return results[0].rawValue;
+        try {
+          const detector = state.scanDetector || new BarcodeDetector({ formats: ['qr_code'] });
+          state.scanDetector = detector;
+          const results = await detector.detect(canvas);
+          if (results[0]?.rawValue) return results[0].rawValue;
+        } catch {
+          state.scanDetector = null;
+        }
       }
 
       await ensureJsQr();
@@ -1544,6 +2132,12 @@
 
     function getActiveRecord() {
       return state.records.find((item) => item.id === state.activeId) || state.records[0] || null;
+    }
+
+    function getRemainingSeconds(record, time = Date.now()) {
+      const period = Number(record?.period || 30);
+      const elapsed = (time / 1000) % period;
+      return Math.ceil(Math.max(0, period - elapsed));
     }
 
     async function copyText(text) {
