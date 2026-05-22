@@ -19,9 +19,11 @@
 ```text
 .
 ├─ public/
+│  ├─ favicon.svg     # 网站图标
 │  └─ index.html      # 单页前端
 ├─ worker/
 │  └─ index.js        # Cloudflare Worker API 和静态资源分发
+├─ server.js          # Node / VPS 服务入口
 ├─ wrangler.toml      # Cloudflare Workers 配置
 └─ package.json
 ```

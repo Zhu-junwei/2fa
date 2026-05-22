@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <link rel="icon" href="data:,">
+  <meta name="theme-color" content="#0f9f8f">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <title>2FA TOTP 工具</title>
   <style>
     :root {
@@ -58,6 +59,14 @@
       gap: 18px;
       margin-bottom: 18px;
       text-align: center;
+    }
+
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 14px 34px rgba(15, 118, 110, 0.22);
     }
 
     .brand {
@@ -692,6 +701,7 @@
   <main class="app">
     <div id="homeView" class="home-view">
     <section class="hero" aria-label="导入 2FA">
+      <img class="brand-icon" src="favicon.svg" width="58" height="58" alt="" aria-hidden="true">
       <h1 class="brand">2FA TOTP</h1>
       <div class="search-wrap">
         <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入 Secret、otpauth 链接，按 Enter 解析">
