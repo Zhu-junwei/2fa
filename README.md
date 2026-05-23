@@ -20,7 +20,8 @@
 .
 ├─ public/
 │  ├─ favicon.svg     # 网站图标
-│  └─ index.html      # 单页前端
+│  ├─ index.html      # 单页前端
+│  └─ totp-core.js    # 前端、Worker 和 Node 共用的 TOTP 核心逻辑
 ├─ worker/
 │  └─ index.js        # Cloudflare Worker API 和静态资源分发
 ├─ server.js          # Node / VPS 服务入口
@@ -111,21 +112,21 @@ npx wrangler deploy
 https://totp-2fa-tool.<your-subdomain>.workers.dev/
 ```
 
-这个地址同时提供网页和 API。
+这个地址同时提供网页和 `/api` API。Cloudflare Workers 部署时，普通网页和静态资源优先由 Assets 提供，只有 `/api` 路径会先调用 Worker。
 
 ## API 用法
 
-API 支持 `secret` 或 `url` 参数：
+API 路径是 `/api`，支持 `secret` 或 `url` 参数：
 
 ```text
-?secret=JBSWY3DPEHPK3PXP
-?url=otpauth%3A%2F%2Ftotp%2FDemo%3Fsecret%3DJBSWY3DPEHPK3PXP
+/api?secret=JBSWY3DPEHPK3PXP
+/api?url=otpauth%3A%2F%2Ftotp%2FDemo%3Fsecret%3DJBSWY3DPEHPK3PXP
 ```
 
 ### 返回纯文本验证码
 
 ```bash
-curl "https://your-domain.example/?secret=JBSWY3DPEHPK3PXP&format=text"
+curl "https://your-domain.example/api?secret=JBSWY3DPEHPK3PXP&format=text"
 ```
 
 返回：
@@ -143,13 +144,13 @@ plain, raw, code, totp
 命令行工具如 `curl`、`wget`、`HTTPie` 不写 `format` 时也会默认返回纯文本：
 
 ```bash
-curl "https://your-domain.example/?secret=JBSWY3DPEHPK3PXP"
+curl "https://your-domain.example/api?secret=JBSWY3DPEHPK3PXP"
 ```
 
 ### 返回 JSON
 
 ```bash
-curl "https://your-domain.example/?secret=JBSWY3DPEHPK3PXP&format=json"
+curl "https://your-domain.example/api?secret=JBSWY3DPEHPK3PXP&format=json"
 ```
 
 示例返回：
@@ -173,13 +174,13 @@ curl "https://your-domain.example/?secret=JBSWY3DPEHPK3PXP&format=json"
 也可以通过 `Accept` 请求 JSON：
 
 ```bash
-curl -H "Accept: application/json" "https://your-domain.example/?secret=JBSWY3DPEHPK3PXP"
+curl -H "Accept: application/json" "https://your-domain.example/api?secret=JBSWY3DPEHPK3PXP"
 ```
 
 ### 返回 otpauth URI
 
 ```bash
-curl "https://your-domain.example/?url=otpauth%3A%2F%2Ftotp%2FDemo%3Fsecret%3DJBSWY3DPEHPK3PXP&format=otpauth"
+curl "https://your-domain.example/api?url=otpauth%3A%2F%2Ftotp%2FDemo%3Fsecret%3DJBSWY3DPEHPK3PXP&format=otpauth"
 ```
 
 `format=otpauth` 的别名：

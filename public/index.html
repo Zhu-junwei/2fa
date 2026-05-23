@@ -1092,7 +1092,18 @@
     </div>
   </div>
 
+  <script src="totp-core.js"></script>
   <script>
+    const {
+      buildOtpAuth,
+      generateTotp,
+      getRemainingSeconds,
+      assertSecret,
+      normalizeRecord,
+      normalizeSecret,
+      parseInput,
+      recordKey
+    } = window.TotpCore;
     const STORAGE_KEY = 'totp-records-v1';
     const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
     const QR_CODE_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
@@ -1361,20 +1372,10 @@
 
     function saveRecord(record, options = {}) {
       const normalized = {
+        ...normalizeRecord(record),
         id: record.id || crypto.randomUUID(),
-        label: record.label || '',
-        issuer: record.issuer || '',
-        secret: normalizeSecret(record.secret),
-        algorithm: (record.algorithm || 'SHA1').toUpperCase(),
-        digits: Number(record.digits || 6),
-        period: Number(record.period || 30),
         addedAt: record.addedAt || new Date().toISOString()
       };
-
-      assertSecret(normalized.secret);
-      if (![6, 7, 8].includes(normalized.digits)) normalized.digits = 6;
-      if (!Number.isFinite(normalized.period) || normalized.period < 10) normalized.period = 30;
-      if (!['SHA1', 'SHA256', 'SHA512'].includes(normalized.algorithm)) normalized.algorithm = 'SHA1';
 
       const key = recordKey(normalized);
       const existingIndex = state.records.findIndex((item) => recordKey(item) === key);
@@ -1472,16 +1473,16 @@
     }
 
     function renderApiExamples() {
-      const base = window.location.protocol === 'file:'
-        ? 'https://your-domain.example'
-        : `${window.location.origin}${window.location.pathname}`;
+      const apiBase = window.location.protocol === 'file:'
+        ? 'https://your-domain.example/api'
+        : new URL('/api', window.location.origin).toString();
       const secret = 'JBSWY3DPEHPK3PXP';
       const otpAuth = 'otpauth://totp/Demo?secret=JBSWY3DPEHPK3PXP&issuer=Demo';
-      const textUrl = `${base}?secret=${encodeURIComponent(secret)}&format=text`;
-      const jsonUrl = `${base}?secret=${encodeURIComponent(secret)}&format=json`;
-      const otpAuthUrl = `${base}?url=${encodeURIComponent(otpAuth)}&format=otpauth`;
-      const autoTextUrl = `${base}?secret=${encodeURIComponent(secret)}`;
-      const acceptJsonUrl = `${base}?secret=${encodeURIComponent(secret)}`;
+      const textUrl = `${apiBase}?secret=${encodeURIComponent(secret)}&format=text`;
+      const jsonUrl = `${apiBase}?secret=${encodeURIComponent(secret)}&format=json`;
+      const otpAuthUrl = `${apiBase}?url=${encodeURIComponent(otpAuth)}&format=otpauth`;
+      const autoTextUrl = `${apiBase}?secret=${encodeURIComponent(secret)}`;
+      const acceptJsonUrl = `${apiBase}?secret=${encodeURIComponent(secret)}`;
       const curlSecret = `curl "${textUrl}"`;
       const curlJson = `curl "${jsonUrl}"`;
       const curlOtpAuth = `curl "${otpAuthUrl}"`;
@@ -1517,7 +1518,7 @@
         </div>
         <div class="api-card">
           <h3>JavaScript 获取纯文本</h3>
-          <p>浏览器或自动化脚本建议显式带上 format=text，避免被当成普通网页打开。</p>
+          <p>浏览器或自动化脚本建议显式带上 format=text，方便直接读取纯文本验证码。</p>
           ${renderCodeBox(fetchExample)}
         </div>
       `;
@@ -1671,102 +1672,6 @@
       } catch (error) {
         showToast(error.message || 'URL 参数无法解析');
       }
-    }
-
-    function parseInput(raw, extraParams = null) {
-      const text = String(raw || '').trim();
-      if (!text) throw new Error('请输入 Secret 或 otpauth 链接');
-      const decodedText = safeDecode(text);
-
-      if (decodedText.toLowerCase().startsWith('otpauth://')) {
-        return parseOtpAuth(decodedText);
-      }
-
-      const urlRecord = parseUrlLike(decodedText);
-      if (urlRecord) return urlRecord;
-
-      const params = extraParams || parseSearchParams(decodedText);
-      if (params) {
-        const nested = params.get('url') || params.get('otpauth') || params.get('otp');
-        if (nested) return parseInput(nested);
-        const secret = params.get('secret');
-        if (secret) {
-          return {
-            label: params.get('label') || params.get('account') || '',
-            issuer: params.get('issuer') || '',
-            secret,
-            digits: Number(params.get('digits') || 6),
-            period: Number(params.get('period') || 30),
-            algorithm: params.get('algorithm') || 'SHA1'
-          };
-        }
-      }
-
-      return {
-        label: '',
-        issuer: '',
-        secret: decodedText,
-        digits: 6,
-        period: 30,
-        algorithm: 'SHA1'
-      };
-    }
-
-    function parseOtpAuth(raw) {
-      let url;
-      try {
-        url = new URL(raw);
-      } catch {
-        throw new Error('otpauth 链接格式不正确');
-      }
-      const secret = url.searchParams.get('secret');
-      if (!secret) throw new Error('otpauth 链接缺少 secret');
-
-      const labelRaw = decodeURIComponent(url.pathname.replace(/^\/+/, '')) || 'TOTP';
-      const issuerParam = url.searchParams.get('issuer') || '';
-      let issuer = issuerParam;
-      let label = labelRaw;
-      if (labelRaw.includes(':')) {
-        const parts = labelRaw.split(':');
-        const prefix = parts.shift().trim();
-        if (!issuer) issuer = prefix;
-        if (issuer === prefix) label = parts.join(':').trim();
-      }
-
-      return {
-        label: label || issuer || 'TOTP',
-        issuer,
-        secret,
-        digits: Number(url.searchParams.get('digits') || 6),
-        period: Number(url.searchParams.get('period') || 30),
-        algorithm: url.searchParams.get('algorithm') || 'SHA1'
-      };
-    }
-
-    function parseUrlLike(text) {
-      try {
-        const url = new URL(text);
-        const nested = url.searchParams.get('url') || url.searchParams.get('otpauth') || url.searchParams.get('otp');
-        if (nested) return parseInput(nested);
-        const secret = url.searchParams.get('secret');
-        if (!secret) return null;
-        return {
-          label: url.searchParams.get('label') || url.searchParams.get('account') || '',
-          issuer: url.searchParams.get('issuer') || '',
-          secret,
-          digits: Number(url.searchParams.get('digits') || 6),
-          period: Number(url.searchParams.get('period') || 30),
-          algorithm: url.searchParams.get('algorithm') || 'SHA1'
-        };
-      } catch {
-        return null;
-      }
-    }
-
-    function parseSearchParams(text) {
-      const trimmed = text.replace(/^\?/, '');
-      if (!trimmed.includes('=')) return null;
-      return new URLSearchParams(trimmed);
     }
 
     async function handleQrUpload(event) {
@@ -2096,57 +2001,6 @@
       });
     }
 
-    async function generateTotp(secret, options = {}, time = Date.now()) {
-      const period = Number(options.period || 30);
-      const digits = Number(options.digits || 6);
-      const algorithm = String(options.algorithm || 'SHA1').toUpperCase();
-      const counter = Math.floor(time / 1000 / period);
-      const keyBytes = base32Decode(secret);
-      const counterBytes = new ArrayBuffer(8);
-      const view = new DataView(counterBytes);
-      view.setUint32(4, counter, false);
-      const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: algorithm.replace('SHA', 'SHA-') }, false, ['sign']);
-      const signature = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBytes));
-      const offset = signature[signature.length - 1] & 0x0f;
-      const binary = ((signature[offset] & 0x7f) << 24) |
-        ((signature[offset + 1] & 0xff) << 16) |
-        ((signature[offset + 2] & 0xff) << 8) |
-        (signature[offset + 3] & 0xff);
-      const otp = binary % (10 ** digits);
-      return String(otp).padStart(digits, '0');
-    }
-
-    function base32Decode(secret) {
-      const clean = normalizeSecret(secret);
-      assertSecret(clean);
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-      let bits = '';
-      for (const char of clean) {
-        const value = alphabet.indexOf(char);
-        if (value < 0) throw new Error('Secret 不是有效的 Base32');
-        bits += value.toString(2).padStart(5, '0');
-      }
-      const bytes = [];
-      for (let i = 0; i + 8 <= bits.length; i += 8) {
-        bytes.push(parseInt(bits.slice(i, i + 8), 2));
-      }
-      return new Uint8Array(bytes);
-    }
-
-    function buildOtpAuth(record) {
-      const issuerPrefix = record.issuer ? `${record.issuer}:` : '';
-      const labelName = record.label || record.issuer || 'Secret';
-      const label = encodeURIComponent(`${issuerPrefix}${labelName}`);
-      const params = new URLSearchParams({
-        secret: normalizeSecret(record.secret),
-        issuer: record.issuer || '',
-        algorithm: record.algorithm || 'SHA1',
-        digits: String(record.digits || 6),
-        period: String(record.period || 30)
-      });
-      return `otpauth://totp/${label}?${params.toString()}`;
-    }
-
     function buildShareLink(record) {
       const base = window.location.protocol === 'file:'
         ? window.location.href.split('?')[0].split('#')[0]
@@ -2182,27 +2036,8 @@
       }
     }
 
-    function normalizeSecret(secret) {
-      return String(secret || '').toUpperCase().replace(/[\s=-]/g, '');
-    }
-
-    function assertSecret(secret) {
-      if (!secret || secret.length < 8) throw new Error('Secret 太短');
-      if (!/^[A-Z2-7]+$/.test(secret)) throw new Error('Secret 只能包含 Base32 字符 A-Z 和 2-7');
-    }
-
-    function recordKey(record) {
-      return `${normalizeSecret(record.secret)}|${record.issuer || ''}|${record.label || ''}`;
-    }
-
     function getActiveRecord() {
       return state.records.find((item) => item.id === state.activeId) || state.records[0] || null;
-    }
-
-    function getRemainingSeconds(record, time = Date.now()) {
-      const period = Number(record?.period || 30);
-      const elapsed = (time / 1000) % period;
-      return Math.ceil(Math.max(0, period - elapsed));
     }
 
     async function copyText(text) {
@@ -2234,14 +2069,6 @@
       els.toast.textContent = message;
       els.toast.classList.add('show');
       state.toastTimer = window.setTimeout(() => els.toast.classList.remove('show'), 1800);
-    }
-
-    function safeDecode(text) {
-      try {
-        return decodeURIComponent(text);
-      } catch {
-        return text;
-      }
     }
 
     function escapeHtml(value) {
