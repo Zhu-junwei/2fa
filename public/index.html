@@ -316,7 +316,27 @@
       font-size: 13px;
     }
 
-    .secret-line {
+    .credential-lines {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .credential-line {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    .credential-label {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .credential-value {
       width: fit-content;
       max-width: 100%;
       overflow: hidden;
@@ -332,12 +352,12 @@
       transition: color 140ms ease, text-shadow 140ms ease;
     }
 
-    .secret-line:hover {
+    .credential-value:hover {
       color: #1d4ed8;
       text-shadow: 0 0 0 currentColor;
     }
 
-    .secret-line.copied {
+    .credential-value.copied {
       color: #047857;
       text-shadow: 0.35px 0 0 currentColor;
     }
@@ -352,6 +372,10 @@
       grid-template-columns: minmax(0, 1fr) 138px;
       gap: 14px;
       align-items: center;
+    }
+
+    .current-card .code-row {
+      transform: translateY(-6px);
     }
 
     .totp-code {
@@ -962,7 +986,7 @@
       <img class="brand-icon" src="favicon.svg" width="58" height="58" alt="" aria-hidden="true">
       <h1 class="brand">2FA TOTP</h1>
       <div class="search-wrap">
-        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入或粘贴 Secret / otpauth / 二维码">
+        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="支持 Secret / otpauth / 二维码">
         <div class="search-actions">
           <button id="scanBtn" class="icon-btn" type="button" title="扫描二维码" aria-label="扫描二维码">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 8h10"></path><path d="M7 12h10"></path><path d="M7 16h6"></path></svg>
@@ -1570,13 +1594,13 @@
 
       const code = state.codes.get(active.id) || ''.padStart(active.digits || 6, '·');
       const identityHtml = renderIdentityHtml(active);
+      const otpAuth = buildOtpAuth(active);
       const urgentClass = getRemainingSeconds(active) <= 5 ? ' urgent' : '';
       els.currentPanel.innerHTML = `
         <div class="current-card${urgentClass}">
           <div class="meta-line">
             <div class="info-stack">
               ${identityHtml}
-              <button class="secret-line" type="button" data-action="copy-secret" data-id="${active.id}" title="点击复制 Secret">Secret ${escapeHtml(active.secret)}</button>
             </div>
             <div class="quick-actions">
               <button class="icon-btn" type="button" data-action="edit" data-id="${active.id}" title="编辑" aria-label="编辑">${icons.edit}</button>
@@ -1590,6 +1614,16 @@
               <div class="timer-top"><span>剩余</span><strong id="timerText">--s</strong></div>
               <div class="bar"><div class="bar-fill"></div></div>
               <div class="hint">${active.digits} 位 / ${active.period}s / ${escapeHtml(active.algorithm)}</div>
+            </div>
+          </div>
+          <div class="credential-lines">
+            <div class="credential-line">
+              <span class="credential-label">Secret</span>
+              <button class="credential-value" type="button" data-action="copy-secret" data-id="${active.id}" title="点击复制 Secret">${escapeHtml(active.secret)}</button>
+            </div>
+            <div class="credential-line">
+              <span class="credential-label">otpauth</span>
+              <button class="credential-value" type="button" data-action="copy-otpauth" data-id="${active.id}" title="点击复制 otpauth">${escapeHtml(otpAuth)}</button>
             </div>
           </div>
         </div>
@@ -1662,6 +1696,13 @@
         copyText(record.secret).then(() => {
           flashCopied(button);
           showToast('Secret 已复制');
+        });
+        return;
+      }
+      if (action === 'copy-otpauth') {
+        copyText(buildOtpAuth(record)).then(() => {
+          flashCopied(button);
+          showToast('otpauth 已复制');
         });
         return;
       }
@@ -2084,9 +2125,13 @@
     async function copyText(text) {
       if (!text) return;
       if (navigator.clipboard?.writeText && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        window.getSelection()?.removeAllRanges();
-        return;
+        try {
+          await navigator.clipboard.writeText(text);
+          window.getSelection()?.removeAllRanges();
+          return;
+        } catch {
+          // Fall back to the selection-based copy path when browser permissions deny clipboard access.
+        }
       }
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -2095,9 +2140,10 @@
       textarea.style.opacity = '0';
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
+      const copied = document.execCommand('copy');
       window.getSelection()?.removeAllRanges();
       textarea.remove();
+      if (!copied) throw new Error('复制失败');
     }
 
     function flashCopied(element) {
