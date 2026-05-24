@@ -102,10 +102,10 @@
 
     .home-footer {
       width: min(680px, 100%);
-      margin: 18px auto 0;
+      margin: 28px auto 0;
       display: grid;
       justify-items: center;
-      gap: 8px;
+      gap: 14px;
       color: var(--subtle);
       font-size: 12px;
       line-height: 1.5;
@@ -289,6 +289,7 @@
     .info-stack {
       min-width: 0;
       display: grid;
+      justify-items: start;
       gap: 6px;
     }
 
@@ -316,11 +317,12 @@
     }
 
     .secret-line {
+      width: fit-content;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: var(--muted);
+      color: #2563eb;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 12px;
       letter-spacing: 0;
@@ -331,7 +333,7 @@
     }
 
     .secret-line:hover {
-      color: var(--accent);
+      color: #1d4ed8;
       text-shadow: 0 0 0 currentColor;
     }
 
@@ -524,6 +526,7 @@
     .record-info {
       min-width: 0;
       display: grid;
+      justify-items: start;
       gap: 1px;
     }
 
@@ -553,10 +556,12 @@
     }
 
     .record-secret {
+      width: fit-content;
+      max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: var(--muted);
+      color: #2563eb;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 11px;
       letter-spacing: 0;
@@ -567,7 +572,7 @@
     }
 
     .record-secret:hover {
-      color: var(--accent);
+      color: #1d4ed8;
       text-shadow: 0 0 0 currentColor;
     }
 
@@ -957,7 +962,7 @@
       <img class="brand-icon" src="favicon.svg" width="58" height="58" alt="" aria-hidden="true">
       <h1 class="brand">2FA TOTP</h1>
       <div class="search-wrap">
-        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入或粘贴 Secret / otpauth">
+        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="输入或粘贴 Secret / otpauth / 二维码">
         <div class="search-actions">
           <button id="scanBtn" class="icon-btn" type="button" title="扫描二维码" aria-label="扫描二维码">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 8h10"></path><path d="M7 12h10"></path><path d="M7 16h6"></path></svg>
@@ -1201,6 +1206,7 @@
       els.imageBtn.addEventListener('click', () => openFilePicker(els.qrInput));
       els.clearRecords.addEventListener('click', openClearModal);
       els.exportRecords.addEventListener('click', exportAllRecords);
+      els.records.addEventListener('click', handleRecordClick);
       els.qrInput.addEventListener('change', handleQrUpload);
       els.cameraInput.addEventListener('change', handleQrUpload);
       els.scanClose.addEventListener('click', closeScanModal);
@@ -1238,7 +1244,14 @@
       });
     }
 
-    function handleInputPaste(event) {
+    async function handleInputPaste(event) {
+      const imageFile = getClipboardImageFile(event.clipboardData);
+      if (imageFile) {
+        event.preventDefault();
+        await addFromQrImage(imageFile, '剪贴板图片里没有识别到二维码');
+        return;
+      }
+
       const text = event.clipboardData?.getData('text') || '';
       try {
         if (splitBatchInput(text).length <= 1) return;
@@ -1598,7 +1611,7 @@
         const urgentClass = getRemainingSeconds(record) <= 5 ? ' urgent' : '';
         const identityHtml = renderIdentityHtml(record);
         return `
-          <article class="record${activeClass}${urgentClass}">
+          <article class="record${activeClass}${urgentClass}" data-record-id="${record.id}" title="切换当前验证码">
             <div class="record-info">
               ${identityHtml ? `<button class="record-title" type="button" data-action="activate" data-id="${record.id}" title="切换当前验证码">${identityHtml}</button>` : ''}
               <button class="record-secret" type="button" data-action="copy-secret" data-id="${record.id}" title="点击复制 Secret">${escapeHtml(record.secret)}</button>
@@ -1617,6 +1630,15 @@
       els.records.querySelectorAll('[data-action]').forEach((button) => {
         button.addEventListener('click', handleRecordAction);
       });
+    }
+
+    function handleRecordClick(event) {
+      if (event.target.closest('[data-action]')) return;
+
+      const recordEl = event.target.closest('.record[data-record-id]');
+      if (!recordEl || !els.records.contains(recordEl)) return;
+
+      setActive(recordEl.dataset.recordId);
     }
 
     function handleRecordAction(event) {
@@ -1678,13 +1700,32 @@
       const file = event.target.files?.[0];
       if (!file) return;
       try {
-        const content = await decodeQrFromImage(file);
-        addFromText(content);
-      } catch (error) {
-        showToast(error.message || '没有识别到二维码');
+        await addFromQrImage(file, '没有识别到二维码');
       } finally {
         event.target.value = '';
       }
+    }
+
+    async function addFromQrImage(file, fallbackMessage) {
+      try {
+        const content = await decodeQrFromImage(file);
+        addFromText(content);
+      } catch (error) {
+        showToast(error.message || fallbackMessage);
+      }
+    }
+
+    function getClipboardImageFile(clipboardData) {
+      const items = Array.from(clipboardData?.items || []);
+      for (const item of items) {
+        if (item.kind !== 'file') continue;
+        const file = item.getAsFile();
+        if (file && (file.type.startsWith('image/') || item.type.startsWith('image/'))) {
+          return file;
+        }
+      }
+
+      return Array.from(clipboardData?.files || []).find((file) => file.type.startsWith('image/')) || null;
     }
 
     async function openScanModal() {
