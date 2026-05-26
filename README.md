@@ -19,8 +19,14 @@
 ```text
 .
 ├─ public/
-│  ├─ favicon.svg     # 网站图标
-│  ├─ index.html      # 单页前端
+│  ├─ assets/
+│  │  ├─ app.js       # 页面交互、渲染和二维码扫描逻辑
+│  │  ├─ icons.js     # 页面内复用的 SVG 图标
+│  │  ├─ locales.js   # 多语言文案
+│  │  ├─ styles.css   # 页面样式
+│  │  └─ images/      # favicon、PWA 和移动端图标
+│  ├─ manifest.webmanifest # PWA 安装信息
+│  ├─ index.html      # 单页前端骨架
 │  └─ totp-core.js    # 前端、Worker 和 Node 共用的 TOTP 核心逻辑
 ├─ worker/
 │  └─ index.js        # Cloudflare Worker API 和静态资源分发
