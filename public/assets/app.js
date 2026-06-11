@@ -11,6 +11,7 @@ const {
 } = window.TotpCore;
 const STORAGE_KEY = 'totp-records-v1';
 const LANGUAGE_STORAGE_KEY = 'totp-language-v1';
+const THEME_STORAGE_KEY = 'totp-theme-v1';
 const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
 const QR_CODE_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 const SCAN_MAX_SIDE = 1280;
@@ -21,6 +22,7 @@ const state = {
   records: [],
   activeId: null,
   locale: 'zh-CN',
+  theme: 'light',
   codes: new Map(),
   toastTimer: null,
   raf: 0,
@@ -40,7 +42,10 @@ const icons = window.TotpIcons;
 
 const els = {
   input: document.getElementById('secretInput'),
-  languageSelect: document.getElementById('languageSelect'),
+  languageButton: document.getElementById('languageButton'),
+  languageModal: document.getElementById('languageModal'),
+  languageOptions: document.getElementById('languageOptions'),
+  themeToggle: document.getElementById('themeToggle'),
   homeView: document.getElementById('homeView'),
   apiView: document.getElementById('apiView'),
   apiLink: document.getElementById('apiLink'),
@@ -126,7 +131,6 @@ function setLanguage(locale, persist = false) {
   document.documentElement.lang = state.locale;
   document.title = t('appTitle');
   document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute('content', t('appTitle'));
-  if (els.languageSelect) els.languageSelect.value = state.locale;
   if (persist) {
     try {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, state.locale);
@@ -136,6 +140,53 @@ function setLanguage(locale, persist = false) {
   }
   applyStaticI18n();
   updateManifest();
+}
+
+function detectTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {
+    // Ignore storage failures; the default light theme still applies.
+  }
+  return 'light';
+}
+
+function setTheme(theme, persist = false) {
+  state.theme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = state.theme;
+  document.documentElement.style.colorScheme = state.theme;
+  document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', state.theme);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getThemeColor());
+  document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute(
+    'content',
+    state.theme === 'dark' ? 'black-translucent' : 'default'
+  );
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, state.theme);
+    } catch {
+      showToast(t('localStorageFail'));
+    }
+  }
+  updateThemeButton();
+  updateManifest();
+}
+
+function getThemeColor() {
+  return state.theme === 'dark' ? '#0d151b' : '#0f9f8f';
+}
+
+function getThemeBackgroundColor() {
+  return state.theme === 'dark' ? '#0d151b' : '#f7f8fa';
+}
+
+function updateThemeButton() {
+  if (!els.themeToggle) return;
+  const label = state.theme === 'dark' ? t('switchToLight') : t('switchToDark');
+  els.themeToggle.setAttribute('title', label);
+  els.themeToggle.setAttribute('aria-label', label);
+  els.themeToggle.dataset.mode = state.theme;
 }
 
 function applyStaticI18n() {
@@ -149,6 +200,8 @@ function applyStaticI18n() {
     });
   });
   els.recordCount.textContent = t('recordCount', { count: state.records.length });
+  renderLanguageOptions();
+  updateThemeButton();
   if (!els.scanModal.classList.contains('open')) {
     els.scanStatus.textContent = t('scanStatusDefault');
   }
@@ -162,8 +215,8 @@ function updateManifest() {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    background_color: '#f7f8fa',
-    theme_color: '#0f9f8f',
+    background_color: getThemeBackgroundColor(),
+    theme_color: getThemeColor(),
     lang: state.locale,
     icons: [
       { src: new URL('assets/images/icon-192.png', window.location.href).href, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
@@ -201,6 +254,7 @@ init();
 function init() {
   state.records = loadRecords();
   state.activeId = state.records[0]?.id || null;
+  setTheme(detectTheme());
   setLanguage(detectLocale());
   bindEvents();
   importFromUrl();
@@ -213,11 +267,26 @@ function bindEvents() {
   els.apiLink.addEventListener('click', () => {
     window.location.hash = 'api';
   });
-  els.languageSelect.addEventListener('change', () => {
-    setLanguage(els.languageSelect.value, true);
+  els.languageButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (els.languageModal.classList.contains('open')) {
+      closeLanguageModal();
+    } else {
+      openLanguageModal();
+    }
+  });
+  els.languageModal.addEventListener('click', (event) => event.stopPropagation());
+  els.languageOptions.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-locale]');
+    if (!button || !els.languageOptions.contains(button)) return;
+    setLanguage(button.dataset.locale, true);
+    closeLanguageModal();
     render();
     renderRoute();
-    window.setTimeout(() => els.languageSelect.blur(), 0);
+  });
+  els.themeToggle.addEventListener('click', () => {
+    setTheme(state.theme === 'dark' ? 'light' : 'dark', true);
+    els.themeToggle.blur();
   });
   els.backHome.addEventListener('click', () => {
     window.location.hash = '';
@@ -262,14 +331,65 @@ function bindEvents() {
     if (!document.hidden) state.renderedSecond = -1;
     syncTicker();
   });
+  window.addEventListener('resize', positionLanguageModal);
+  window.addEventListener('scroll', positionLanguageModal, true);
+  document.addEventListener('click', (event) => {
+    if (!els.languageModal.classList.contains('open')) return;
+    if (event.target === els.languageButton || els.languageButton.contains(event.target)) return;
+    if (els.languageModal.contains(event.target)) return;
+    closeLanguageModal();
+  });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       closeScanModal();
       closeQrModal();
       closeEditModal();
       closeClearModal();
+      closeLanguageModal();
     }
   });
+}
+
+function openLanguageModal() {
+  renderLanguageOptions();
+  els.languageModal.classList.add('open');
+  positionLanguageModal();
+}
+
+function closeLanguageModal() {
+  els.languageModal.classList.remove('open');
+}
+
+function positionLanguageModal() {
+  if (!els.languageModal || !els.languageButton || !els.languageModal.classList.contains('open')) return;
+  const gap = 8;
+  const margin = 12;
+  const buttonRect = els.languageButton.getBoundingClientRect();
+  const popoverRect = els.languageModal.getBoundingClientRect();
+  const width = popoverRect.width || 180;
+  const left = Math.min(
+    Math.max(margin, buttonRect.right - width),
+    window.innerWidth - width - margin
+  );
+  const top = Math.min(
+    buttonRect.bottom + gap,
+    window.innerHeight - popoverRect.height - margin
+  );
+  els.languageModal.style.left = `${left}px`;
+  els.languageModal.style.top = `${Math.max(margin, top)}px`;
+}
+
+function renderLanguageOptions() {
+  if (!els.languageOptions) return;
+  els.languageOptions.innerHTML = Object.entries(LOCALES).map(([locale, texts]) => {
+    const active = locale === state.locale;
+    const nativeName = escapeHtml(texts.nativeName || locale);
+    return `
+      <button class="language-option${active ? ' active' : ''}" type="button" data-locale="${locale}" aria-pressed="${active}">
+        <span>${nativeName}</span>
+      </button>
+    `;
+  }).join('');
 }
 
 async function handleInputPaste(event) {
