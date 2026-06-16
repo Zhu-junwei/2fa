@@ -427,7 +427,9 @@ async function animate() {
   if (active) {
     const elapsed = (now / 1000) % active.period;
     const remaining = Math.max(0, active.period - elapsed);
-    document.documentElement.style.setProperty('--progress', String(remaining / active.period));
+    const ringCircumference = 2 * Math.PI * 16;
+    const ringProgress = remaining / active.period;
+    document.documentElement.style.setProperty('--ring-offset', String(ringCircumference * (1 - ringProgress)));
     const second = Math.ceil(remaining);
     const timerText = document.getElementById('timerText');
     if (timerText) timerText.textContent = `${String(second).padStart(2, '0')}s`;
@@ -751,13 +753,19 @@ function renderCurrent() {
 
   const code = state.codes.get(active.id) || ''.padStart(active.digits || 6, '·');
   const identityHtml = renderIdentityHtml(active);
-  const otpAuth = buildOtpAuth(active);
   const urgentClass = getRemainingSeconds(active) <= 5 ? ' urgent' : '';
   els.currentPanel.innerHTML = `
     <div class="current-card${urgentClass}">
       <div class="meta-line">
         <div class="info-stack">
           ${identityHtml}
+        </div>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
+            <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
+            <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
+          </svg>
+          <span class="ring-text" id="timerText">--s</span>
         </div>
         <div class="quick-actions">
           <button class="icon-btn" type="button" data-action="edit" data-id="${active.id}" title="${t('edit')}" aria-label="${t('edit')}">${icons.edit}</button>
@@ -767,21 +775,6 @@ function renderCurrent() {
       </div>
       <div class="code-row">
         <button class="totp-code" type="button" data-action="copy-code" data-id="${active.id}" title="${t('copyCode')}">${escapeHtml(code)}</button>
-        <div class="timer">
-          <div class="timer-top"><span>${t('remaining')}</span><strong id="timerText">--s</strong></div>
-          <div class="bar"><div class="bar-fill"></div></div>
-          <div class="hint">${t('timerHint', { digits: active.digits, period: active.period, algorithm: escapeHtml(active.algorithm) })}</div>
-        </div>
-      </div>
-      <div class="credential-lines">
-        <div class="credential-line">
-          <span class="credential-label">Secret</span>
-          <button class="credential-value" type="button" data-action="copy-secret" data-id="${active.id}" title="${t('copySecret')}">${escapeHtml(active.secret)}</button>
-        </div>
-        <div class="credential-line">
-          <span class="credential-label">otpauth</span>
-          <button class="credential-value" type="button" data-action="copy-otpauth" data-id="${active.id}" title="${t('copyOtpAuth')}">${escapeHtml(otpAuth)}</button>
-        </div>
       </div>
     </div>
   `;

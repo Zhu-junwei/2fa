@@ -83,7 +83,7 @@ button {
 .app {
   width: min(920px, calc(100% - 28px));
   margin: 0 auto;
-  padding: clamp(42px, 9vh, 86px) 0 40px;
+  padding: clamp(12px, 4vh, 32px) 0 40px;
 }
 
 .hero {
@@ -141,11 +141,7 @@ button {
 }
 
 .brand {
-  margin: 0;
-  font-size: clamp(34px, 8vw, 64px);
-  line-height: 1;
-  letter-spacing: 0;
-  font-weight: 760;
+  display: none;
 }
 
 .search-wrap {
@@ -377,13 +373,13 @@ button {
 }
 
 .meta-line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .info-stack {
+  flex: 1;
   min-width: 0;
   display: grid;
   justify-items: start;
@@ -413,73 +409,23 @@ button {
   font-size: 13px;
 }
 
-.credential-lines {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.credential-line {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-  font-size: 12px;
-}
-
-.credential-label {
-  color: var(--muted);
-  font-weight: 650;
-}
-
-.credential-value {
-  width: fit-content;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #2563eb;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  letter-spacing: 0;
-  text-align: left;
-  user-select: none;
-  border-radius: 8px;
-  transition: color 140ms ease, text-shadow 140ms ease;
-}
-
-.credential-value:hover {
-  color: #1d4ed8;
-  text-shadow: 0 0 0 currentColor;
-}
-
-.credential-value.copied {
-  color: #047857;
-  text-shadow: 0.35px 0 0 currentColor;
-}
-
 .quick-actions {
   display: flex;
   gap: 4px;
 }
 
 .code-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 138px;
-  gap: 14px;
-  align-items: center;
-}
-
-.current-card .code-row {
-  transform: translateY(-6px);
+  text-align: center;
 }
 
 .totp-code {
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 180px;
   min-height: 76px;
-  display: grid;
-  place-items: center;
+  padding: 0 24px;
   border-radius: 14px;
   color: var(--text);
   background: var(--code-surface);
@@ -522,53 +468,57 @@ button {
   box-shadow: 0 14px 28px rgba(220, 38, 38, 0.14);
 }
 
-.timer {
-  display: grid;
-  gap: 8px;
-  align-content: center;
-  min-height: 76px;
-}
-
-.timer-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  transition: color 700ms ease;
-}
-
-.current-card.urgent .timer-top,
-.current-card.urgent .hint {
-  color: var(--danger);
-}
-
-.bar {
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--surface-soft);
-}
-
-.bar-fill {
-  height: 100%;
-  width: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), #34d399);
-  transform-origin: left center;
-  transform: scaleX(var(--progress, 0));
-  will-change: transform;
-  transition: background 700ms ease;
-}
-
-.current-card.urgent .bar-fill {
-  background: linear-gradient(90deg, #ef4444, var(--danger));
-}
-
 .hint {
   color: var(--subtle);
   font-size: 12px;
+}
+
+.timer-ring-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.timer-ring {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
+.ring-bg {
+  stroke: var(--line);
+  fill: none;
+}
+
+.ring-fill {
+  stroke: var(--accent);
+  fill: none;
+  stroke-linecap: round;
+  stroke-dashoffset: var(--ring-offset, 0);
+  transition: stroke 700ms ease;
+}
+
+.current-card.urgent .ring-fill {
+  stroke: var(--danger);
+}
+
+.ring-text {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  pointer-events: none;
+  line-height: 1;
+  transition: color 700ms ease;
+}
+
+.current-card.urgent .ring-text {
+  color: var(--danger);
 }
 
 .history {
@@ -1103,7 +1053,7 @@ button {
 @media (max-width: 640px) {
   .app {
     width: min(100% - 18px, 920px);
-    padding-top: 34px;
+    padding-top: 10px;
   }
 
   .search-input {
@@ -1116,13 +1066,8 @@ button {
     padding: 12px;
   }
 
-  .code-row,
   .record {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .timer {
-    min-height: auto;
   }
 
   .record {
