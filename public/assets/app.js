@@ -776,6 +776,7 @@ function renderCurrent() {
       <div class="code-row">
         <button class="totp-code" type="button" data-action="copy-code" data-id="${active.id}" title="${t('copyCode')}">${escapeHtml(code)}</button>
       </div>
+      <div class="current-secret">${escapeHtml(active.secret)}</div>
     </div>
   `;
   els.currentPanel.querySelectorAll('[data-action]').forEach((button) => {

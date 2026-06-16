@@ -347,8 +347,8 @@ button {
 
 .current-card {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 16px 16px 6px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -466,6 +466,14 @@ button {
   border-color: rgba(220, 38, 38, 0.58);
   background: var(--danger-surface-strong);
   box-shadow: 0 14px 28px rgba(220, 38, 38, 0.14);
+}
+
+.current-secret {
+  margin-top: -4px;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .hint {
