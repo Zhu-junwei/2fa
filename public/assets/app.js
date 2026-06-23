@@ -768,15 +768,15 @@ function renderCurrent() {
       </div>
       <div class="code-row">
         <button class="totp-code" type="button" data-action="copy-code" data-id="${active.id}" title="${t('copyCode')}">${escapeHtml(code)}</button>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
+            <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
+            <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
+          </svg>
+          <span class="ring-text" id="timerText">--s</span>
+        </div>
       </div>
       <div class="current-secret">${escapeHtml(active.secret)}</div>
-      <div class="timer-ring-wrap">
-        <svg class="timer-ring" viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
-          <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
-          <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
-        </svg>
-        <span class="ring-text" id="timerText">--s</span>
-      </div>
     </div>
   `;
   els.currentPanel.querySelectorAll('[data-action]').forEach((button) => {
