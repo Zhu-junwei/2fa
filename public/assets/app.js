@@ -1160,7 +1160,6 @@ function openEditModal(record) {
   els.editPeriod.value = String(record.period || 30);
   els.editAlgorithm.value = record.algorithm || 'SHA1';
   els.editModal.classList.add('open');
-  els.editSecret.focus();
 }
 
 function closeEditModal() {
