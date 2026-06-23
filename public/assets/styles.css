@@ -551,7 +551,7 @@ button {
 
 .history-head h2 {
   margin: 0;
-  color: var(--text);
+  color: var(--muted);
   font-size: 15px;
   font-weight: 720;
 }
