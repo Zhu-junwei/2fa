@@ -432,7 +432,7 @@ async function animate() {
     document.documentElement.style.setProperty('--ring-offset', String(ringCircumference * (1 - ringProgress)));
     const second = Math.ceil(remaining);
     const timerText = document.getElementById('timerText');
-    if (timerText) timerText.textContent = `${String(second).padStart(2, '0')}s`;
+    if (timerText) timerText.textContent = String(second).padStart(2, '0');
 
     const wholeSecond = Math.floor(now / 1000);
     if (wholeSecond !== state.renderedSecond) {
@@ -773,7 +773,7 @@ function renderCurrent() {
             <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
             <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
           </svg>
-          <span class="ring-text" id="timerText">--s</span>
+          <span class="ring-text" id="timerText">--</span>
         </div>
       </div>
       <div class="current-secret">${escapeHtml(active.secret)}</div>
