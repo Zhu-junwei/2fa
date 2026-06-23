@@ -760,13 +760,6 @@ function renderCurrent() {
         <div class="info-stack">
           ${identityHtml}
         </div>
-        <div class="timer-ring-wrap">
-          <svg class="timer-ring" viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
-            <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
-            <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
-          </svg>
-          <span class="ring-text" id="timerText">--s</span>
-        </div>
         <div class="quick-actions">
           <button class="icon-btn" type="button" data-action="edit" data-id="${active.id}" title="${t('edit')}" aria-label="${t('edit')}">${icons.edit}</button>
           <button class="icon-btn" type="button" data-action="share" data-id="${active.id}" title="${t('copyShare')}" aria-label="${t('copyShare')}">${icons.share}</button>
@@ -777,6 +770,13 @@ function renderCurrent() {
         <button class="totp-code" type="button" data-action="copy-code" data-id="${active.id}" title="${t('copyCode')}">${escapeHtml(code)}</button>
       </div>
       <div class="current-secret">${escapeHtml(active.secret)}</div>
+      <div class="timer-ring-wrap">
+        <svg class="timer-ring" viewBox="0 0 40 40" width="36" height="36" aria-hidden="true">
+          <circle class="ring-bg" cx="20" cy="20" r="16" fill="none" stroke-width="3"/>
+          <circle class="ring-fill" cx="20" cy="20" r="16" fill="none" stroke-width="3" stroke-dasharray="100.53" stroke-dashoffset="0" transform="rotate(-90 20 20)"/>
+        </svg>
+        <span class="ring-text" id="timerText">--s</span>
+      </div>
     </div>
   `;
   els.currentPanel.querySelectorAll('[data-action]').forEach((button) => {

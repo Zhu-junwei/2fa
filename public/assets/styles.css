@@ -346,6 +346,7 @@ button {
 }
 
 .current-card {
+  position: relative;
   display: grid;
   gap: 10px;
   padding: 16px 16px 6px;
@@ -482,7 +483,9 @@ button {
 }
 
 .timer-ring-wrap {
-  position: relative;
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
