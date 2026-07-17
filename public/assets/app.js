@@ -60,6 +60,7 @@ const els = {
   qrInput: document.getElementById('qrInput'),
   cameraInput: document.getElementById('cameraInput'),
   currentPanel: document.getElementById('currentPanel'),
+  historySection: document.getElementById('historySection'),
   records: document.getElementById('records'),
   recordCount: document.getElementById('recordCount'),
   clearRecords: document.getElementById('clearRecords'),
@@ -612,6 +613,7 @@ function setActive(id) {
 }
 
 function render() {
+  els.historySection.hidden = !state.records.length;
   renderCurrent();
   renderRecords();
   els.recordCount.textContent = t('recordCount', { count: state.records.length });
