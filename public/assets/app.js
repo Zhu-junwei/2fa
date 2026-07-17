@@ -51,6 +51,9 @@ const els = {
   apiLink: document.getElementById('apiLink'),
   backHome: document.getElementById('backHome'),
   apiExamples: document.getElementById('apiExamples'),
+  usageBtn: document.getElementById('usageBtn'),
+  usageModal: document.getElementById('usageModal'),
+  usageClose: document.getElementById('usageClose'),
   parseBtn: document.getElementById('parseBtn'),
   scanBtn: document.getElementById('scanBtn'),
   imageBtn: document.getElementById('imageBtn'),
@@ -293,6 +296,11 @@ function bindEvents() {
   });
   window.addEventListener('hashchange', renderRoute);
   els.parseBtn.addEventListener('click', () => addFromText(els.input.value));
+  els.usageBtn.addEventListener('click', openUsageModal);
+  els.usageClose.addEventListener('click', closeUsageModal);
+  els.usageModal.addEventListener('click', (event) => {
+    if (event.target === els.usageModal) closeUsageModal();
+  });
   els.input.addEventListener('paste', handleInputPaste);
   els.input.addEventListener('keydown', handleInputKeydown);
   els.scanBtn.addEventListener('click', openScanModal);
@@ -345,6 +353,7 @@ function bindEvents() {
       closeQrModal();
       closeEditModal();
       closeClearModal();
+      closeUsageModal();
       closeLanguageModal();
     }
   });
@@ -663,9 +672,19 @@ function renderRoute() {
   els.apiView.classList.toggle('active', apiMode);
   if (apiMode) {
     renderApiExamples();
+    window.scrollTo(0, 0);
+    window.requestAnimationFrame(() => window.scrollTo(0, 0));
   } else {
     els.apiExamples.innerHTML = '';
   }
+}
+
+function openUsageModal() {
+  els.usageModal.classList.add('open');
+}
+
+function closeUsageModal() {
+  els.usageModal.classList.remove('open');
 }
 
 function renderApiExamples() {
@@ -747,7 +766,7 @@ function buildDisplayName(record) {
 function renderCurrent() {
   const active = getActiveRecord();
   if (!active) {
-    els.currentPanel.innerHTML = `<div class="empty">${t('emptyState')}</div>`;
+    els.currentPanel.innerHTML = `<div class="empty"><span class="empty-description">${escapeHtml(t('appDescription'))}</span></div>`;
     return;
   }
 

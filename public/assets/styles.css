@@ -304,6 +304,7 @@ button {
 .top-actions .icon-btn,
 .search-input,
 .api-link,
+.usage-trigger,
 .feature-tag,
 .footer-link,
 .current-card,
@@ -316,6 +317,7 @@ button {
 .scan-panel,
 .edit-panel,
 .confirm-panel,
+.usage-panel,
 .language-panel,
 .copy-row,
 .code-box,
@@ -758,6 +760,25 @@ button {
   display: grid;
 }
 
+.empty-description {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.usage-trigger {
+  position: static;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+#scanModal {
+  place-items: start center;
+  overflow-y: auto;
+}
+
 .language-popover {
   position: fixed;
   z-index: 35;
@@ -828,7 +849,8 @@ button {
 }
 
 .edit-panel,
-.confirm-panel {
+.confirm-panel,
+.usage-panel {
   width: min(420px, 100%);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -837,6 +859,72 @@ button {
   border-radius: 18px;
   background: var(--surface);
   box-shadow: var(--panel-shadow);
+}
+
+.usage-panel {
+  width: min(520px, 100%);
+}
+
+.usage-panel > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.usage-example-list {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.usage-example-list > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--code-surface);
+}
+
+.usage-example-list span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.usage-example-list code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  user-select: text;
+}
+
+.usage-image-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 10px;
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+
+.usage-image-note .icon {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.usage-image-note p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .confirm-panel p {

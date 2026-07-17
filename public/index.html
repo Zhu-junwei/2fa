@@ -38,7 +38,7 @@
       <img class="brand-icon" src="assets/images/icon-192.png" width="58" height="58" alt="" aria-hidden="true">
       <h1 class="brand">2FA TOTP</h1>
       <div class="search-wrap">
-        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" placeholder="支持 Secret / otpauth / 二维码" data-i18n-attr="placeholder:inputPlaceholder">
+        <input id="secretInput" class="search-input" spellcheck="false" autocomplete="off" aria-label="2FA Secret 或 otpauth 链接" data-i18n-attr="aria-label:inputLabel">
         <div class="search-actions">
           <button id="scanBtn" class="icon-btn" type="button" title="扫描二维码" aria-label="扫描二维码" data-i18n-attr="title:scanQr;aria-label:scanQr">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 8h10"></path><path d="M7 12h10"></path><path d="M7 16h6"></path></svg>
@@ -56,7 +56,7 @@
     </section>
 
     <section id="currentPanel" class="current" aria-label="当前验证码" data-i18n-attr="aria-label:currentCode">
-      <div class="empty" data-i18n="emptyState">输入或扫码导入后，验证码会显示在这里。密钥只保存在当前浏览器。</div>
+      <div class="empty"><span class="empty-description" data-i18n="appDescription">在当前浏览器中生成和管理 2FA 动态验证码</span></div>
     </section>
 
     <section class="history" aria-label="历史记录" data-i18n-attr="aria-label:history">
@@ -82,6 +82,9 @@
         <span class="feature-tag" data-i18n="featureStorage">浏览器内保存</span>
       </div>
       <div class="footer-links">
+        <button id="usageBtn" class="icon-btn usage-trigger" type="button" title="使用示例" aria-label="使用示例" data-i18n-attr="title:usageExamples;aria-label:usageExamples">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.85.8c0 1.7-2.55 2.05-2.55 3.7"></path><path d="M12 17h.01"></path></svg>
+        </button>
         <button id="apiLink" class="api-link" type="button" data-i18n="apiExamples">API 调用示例</button>
         <a class="footer-link" href="https://github.com/Zhu-junwei/2fa" target="_blank" rel="noreferrer">
           <svg class="github-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.011-1.232-.017-2.235-3.338.724-4.042-1.416-4.042-1.416-.546-1.386-1.333-1.755-1.333-1.755-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.236 1.839 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.381 1.235-3.221-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 6.098c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.119 3.176.769.84 1.234 1.911 1.234 3.221 0 4.609-2.807 5.625-5.479 5.921.43.372.823 1.102.823 2.222 0 1.605-.015 2.898-.015 3.293 0 .322.216.696.825.578C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
@@ -153,6 +156,27 @@
         <button id="clearCancel" class="text-btn" type="button" data-i18n="cancel">取消</button>
         <button id="clearConfirm" class="text-btn primary" type="button" data-i18n="clear">清空</button>
       </div>
+    </div>
+  </div>
+
+  <div id="usageModal" class="modal" role="dialog" aria-modal="true" aria-label="使用示例" data-i18n-attr="aria-label:usageExamples">
+    <div class="usage-panel">
+      <div class="qr-head">
+        <strong data-i18n="usageExamples">使用示例</strong>
+        <button id="usageClose" class="icon-btn" type="button" title="关闭" aria-label="关闭使用示例" data-i18n-attr="title:close;aria-label:closeUsage">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <p data-i18n="usageIntro">可以输入或粘贴以下内容：</p>
+      <div class="usage-example-list">
+        <div><span>Secret</span><code>JBSWY3DPEHPK3PXP</code></div>
+        <div><span>otpauth</span><code>otpauth://totp/Demo?secret=JBSWY3DPEHPK3PXP&amp;issuer=Demo</code></div>
+      </div>
+      <div class="usage-image-note">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10.5" r="1.5"></circle><path d="m21 15-5-5L5 19"></path></svg>
+        <p data-i18n="usageQrImage">也可以把包含二维码的图片直接粘贴到输入框（Ctrl/⌘ + V），或点击图片图标选择文件；点击扫码图标可以使用相机。</p>
+      </div>
+      <p class="hint" data-i18n="usageBatch">需要批量导入时，每行输入一个 Secret 或 otpauth 链接。</p>
     </div>
   </div>
 
