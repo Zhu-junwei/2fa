@@ -1168,18 +1168,33 @@ button {
   }
 
   .record {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 78px 108px;
+    gap: 4px;
+    padding: 6px 4px 6px 8px;
   }
 
-  .record {
-    gap: 6px;
+  .record-info {
+    grid-column: auto;
   }
 
   .record-actions {
-    justify-content: flex-start;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  .record-actions .icon-btn {
+    width: 26px;
+    height: 32px;
+  }
+
+  .record-actions .icon {
+    width: 16px;
+    height: 16px;
   }
 
   .mini-code {
     width: 100%;
+    min-height: 34px;
+    font-size: 18px;
   }
 }
